@@ -167,9 +167,9 @@
     const lj = S.ljubimci[0];
     if (!lj) return `<div class="kartica"><span class="oznaka">SERUMI</span>${serumHtml('SVEN')}${serumHtml('MARCY')}${serumHtml('FLUFFY')}</div>`;
     if (lj.vrsta === 'macka') {
-      return `<div class="kartica"><span class="oznaka">PREPORUKA ZA ${esc(lj.ime.toUpperCase())}</span>${serumHtml('MARCY')}<span class="sitno">Za kožu i dlaku mačaka Animolio nema serum.</span></div>`;
+      return `<div class="kartica"><span class="oznaka">PREPORUKA · ${esc(lj.ime.toUpperCase())}</span>${serumHtml('MARCY')}<span class="sitno">Za kožu i dlaku mačaka Animolio nema serum.</span></div>`;
     }
-    return `<div class="kartica"><span class="oznaka">PREPORUKA ZA ${esc(lj.ime.toUpperCase())}</span>${serumHtml('SVEN')}${serumHtml('FLUFFY')}</div>`;
+    return `<div class="kartica"><span class="oznaka">PREPORUKA · ${esc(lj.ime.toUpperCase())}</span>${serumHtml('SVEN')}${serumHtml('FLUFFY')}</div>`;
   }
   async function zaslonPocetna() {
     const lj = S.ljubimci[0];
