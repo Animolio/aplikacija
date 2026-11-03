@@ -241,6 +241,7 @@
     let h = esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
     h = h.replace(/\[([^\]]+)\]\((https:\/\/(?:www\.)?animolio\.eu[^\s)]*)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
     h = h.replace(/(^|[\s(])((?:https:\/\/)?(?:www\.)?animolio\.eu(?:\/[^\s<)]*)?)/g, (m, a, u) => `${a}<a href="${u.startsWith('http') ? u : 'https://' + u}" target="_blank" rel="noopener">${u}</a>`);
+    h = h.replace(/<a href="https:\/\/(?:www\.)?animolio\.eu\/product-page\/(sven|marcy|fluffy)[^"]*"[^>]*>[^<]*<\/a>/gi, (m, p) => `<button class="gumb mali naglaseni begi-kupi" type="button" data-kupi="${p.toUpperCase()}">Kupi ${p.toUpperCase()} u aplikaciji</button>`);
     return h.replace(/\n/g, '<br>');
   }
   function zaslonBegi() {
@@ -254,6 +255,7 @@
       <form id="f" class="begi-unos"><input type="text" id="pitanje" maxlength="500" autocomplete="off" aria-label="Vaše pitanje"><button class="gumb naglaseni" type="submit" aria-label="Pošalji">Pošalji</button></form>
       <p class="sitno centar">Begi je AI pomoćnik. Razgovori se spremaju.</p>`, zaslonPocetna);
     const raz = app.querySelector('#raz'); raz.scrollTop = raz.scrollHeight;
+    raz.addEventListener('click', (e) => { const x = e.target.closest('[data-kupi]'); if (x) kupi(x.dataset.kupi, x); });
     app.querySelector('#f').addEventListener('submit', async (e) => {
       e.preventDefault();
       const ul = app.querySelector('#pitanje'), b = e.submitter, t = ul.value.trim();
