@@ -23,6 +23,7 @@
     return `<div class="vrh">${natrag ? `<button class="natrag" data-natrag aria-label="Natrag">${strelica}</button>` : '<span class="prazno"></span>'}<span class="marka">ANIMOLIO</span><span class="prazno"></span></div>`;
   }
   function prikazi(html, onNatrag) {
+    app.classList.remove('s-izbornikom');
     app.innerHTML = html;
     const n = app.querySelector('[data-natrag]');
     if (n && onNatrag) n.addEventListener('click', onNatrag);
