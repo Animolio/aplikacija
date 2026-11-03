@@ -40,6 +40,7 @@
         <label class="polje">E-pošta<input type="email" id="mail" autocomplete="email" inputmode="email" required value="${esc(S.email)}"></label>
         <p class="poruka" role="alert"></p>
         <button class="gumb" type="submit">Pošalji kod za prijavu</button>
+        ${window.AnimolioAgent ? window.AnimolioAgent.vezaUlaz() : ''}
       </form>`);
     app.querySelector('#f').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -83,6 +84,7 @@
 
   /* ---------- Nakon prijave ---------- */
   async function nakonPrijave() {
+    if (window.AnimolioAgent && await window.AnimolioAgent.preuzmi(A)) return;
     let { data: p } = await sb.from('profili').select('id, uloga, kod_popusta').eq('id', S.korisnik.id).maybeSingle();
     if (!p) {
       const ins = await sb.from('profili').insert({ id: S.korisnik.id }).select('id, uloga, kod_popusta').single();
@@ -221,6 +223,8 @@
       greska('Blagajna se nije otvorila. Pokušajte ponovno ili kupite izravno na animolio.eu.');
     }
   }
+
+  const A = { sb, S, app, prikazi, vrh, esc, greska, zauzeto, zaslonUlaz, zaslonPocetna };
 
   /* ---------- Pokretanje ---------- */
   (async function start() {
