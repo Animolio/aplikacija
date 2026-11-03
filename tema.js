@@ -4,10 +4,10 @@
 (function () {
   'use strict';
   const SKINS = {
-    animolio: { naziv: 'Animolio', L: { bg: '#FDFCF8', surface: '#FFFFFF', surface2: '#F6F2EC', ink: '#3A2A21', muted: '#6E5C50', line: '#E6DED4', accent: '#8B6B3D', accentInk: '#FFFFFF', accentSoft: '#F7E1D7', hero: '#3A2A21', heroInk: '#FDFCF8' }, D: { bg: '#17120F', surface: '#211A16', surface2: '#2A221D', ink: '#F2EAE2', muted: '#B3A496', line: '#362C25', accent: '#D2AE79', accentInk: '#1B140F', accentSoft: '#2F261D', hero: '#2A211B', heroInk: '#F2EAE2' } },
+    animolio: { naziv: 'Animolio', L: { bg: '#FDFCF8', surface: '#FFFFFF', surface2: '#FBEEE8', ink: '#3A2A21', muted: '#6E5C50', line: '#EEDFD6', accent: '#3A2A21', accentInk: '#FDFCF8', accentSoft: '#F7E1D7', hero: '#F7E1D7', heroInk: '#3A2A21' }, D: { bg: '#1A1310', surface: '#241B17', surface2: '#2E231E', ink: '#F7EDE6', muted: '#BBA79A', line: '#3A2C25', accent: '#F2CDBE', accentInk: '#2A1A12', accentSoft: '#3A2822', hero: '#3A2822', heroInk: '#F7EDE6' } },
     sven: { naziv: 'Sven', L: { bg: '#FDF8F6', surface: '#FFFFFF', surface2: '#FBEAE4', ink: '#2B2326', muted: '#6F5F61', line: '#F0DFDA', accent: '#B8323A', accentInk: '#FFFFFF', accentSoft: '#FBE3DF', hero: '#7D3338', heroInk: '#FFF4F1' }, D: { bg: '#1A1214', surface: '#24191B', surface2: '#2F2023', ink: '#F7ECEA', muted: '#C3A8A8', line: '#3D2A2D', accent: '#EE7A6E', accentInk: '#2A1214', accentSoft: '#3A2124', hero: '#4A2226', heroInk: '#F7ECEA' } },
     marcy: { naziv: 'Marcy', L: { bg: '#F7F9FC', surface: '#FFFFFF', surface2: '#E9F0F7', ink: '#1E2747', muted: '#55607E', line: '#DDE5EF', accent: '#2A5297', accentInk: '#FFFFFF', accentSoft: '#E3EBF6', hero: '#263472', heroInk: '#F3F6FC' }, D: { bg: '#0F1424', surface: '#171E33', surface2: '#1F2842', ink: '#E9EEF7', muted: '#9AA6C2', line: '#28324D', accent: '#72AFD2', accentInk: '#0D1A2B', accentSoft: '#1C2C47', hero: '#1D2A55', heroInk: '#E9EEF7' } },
-    fluffy: { naziv: 'Fluffy', L: { bg: '#F9FAF1', surface: '#FFFFFF', surface2: '#EEF1DC', ink: '#262D14', muted: '#5C6446', line: '#E2E7CB', accent: '#55702A', accentInk: '#FFFFFF', accentSoft: '#EAF0D3', hero: '#3E5220', heroInk: '#F9FAF1' }, D: { bg: '#13150C', surface: '#1B1E11', surface2: '#232816', ink: '#F0F2E2', muted: '#AEB592', line: '#30361F', accent: '#C2D17A', accentInk: '#1A1F0A', accentSoft: '#2A321A', hero: '#2C3818', heroInk: '#F0F2E2' } },
+    fluffy: { naziv: 'Fluffy', L: { bg: '#FCFAF2', surface: '#FFFFFF', surface2: '#F5EDCF', ink: '#3A2F1A', muted: '#6F6248', line: '#EDE4C8', accent: '#86652F', accentInk: '#FFFFFF', accentSoft: '#F6EED4', hero: '#E1C983', heroInk: '#3A2F1A' }, D: { bg: '#17140C', surface: '#211C11', surface2: '#2B2516', ink: '#F5EEDB', muted: '#BFB291', line: '#3A321E', accent: '#E1C983', accentInk: '#241D0C', accentSoft: '#352C17', hero: '#3A3018', heroInk: '#F5EEDB' } },
   };
   const SEM = { L: { bad: '#9B2C2C', good: '#2F7A4A' }, D: { bad: '#EE8B78', good: '#6FC48F' } };
   const VARS = { bg: '--pozadina', surface: '--kartica', surface2: '--kartica2', ink: '--tekst', muted: '--blago', line: '--rub', accent: '--naglasak', accentInk: '--naglasak-tekst', accentSoft: '--naglasak-blago', hero: '--hero', heroInk: '--hero-tekst', bad: '--greska', good: '--dobro' };
@@ -114,8 +114,10 @@
         <p class="sitno">Ilustracije s etiketa: akademski slikar Eugen Varzić.</p></section>` : ''}
       <section class="kartica"><span class="oznaka">NAČIN PRIKAZA</span>
         <div class="segment" role="group" aria-label="Način prikaza">${[['sustav', 'Kao mobitel'], ['svijetlo', 'Svijetlo'], ['tamno', 'Tamno']].map(([k, n]) => `<button type="button" data-nacin="${k}" aria-pressed="${T.nacin === k}">${n}</button>`).join('')}</div></section>
-      <p class="poruka" role="alert"></p>`, natrag);
+      <p class="poruka" role="alert"></p>
+      ${klub && A.odjava ? '<div class="dno"><button class="veza" type="button" id="odjava">Odjava</button></div>' : ''}`, natrag);
     const app = A.app, por = app.querySelector('.poruka');
+    const od = app.querySelector('#odjava'); if (od) od.addEventListener('click', A.odjava);
     const ponovno = () => postavke(A, natrag);
     const traziFoto = () => app.querySelector('#foto').click();
     app.querySelectorAll('[data-skin]').forEach((b) => b.addEventListener('click', () => {
