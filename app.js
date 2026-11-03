@@ -229,7 +229,10 @@
   /* ---------- Pokretanje ---------- */
   (async function start() {
     const { data } = await sb.auth.getSession();
-    if (data.session) { S.korisnik = data.session.user; S.email = data.session.user.email; await nakonPrijave(); }
+    if (data.session) {
+      const u = await sb.auth.getUser();
+      if (u.error || !u.data.user) { await sb.auth.signOut({ scope: 'local' }); zaslonUlaz(); return; }
+      S.korisnik = u.data.user; S.email = u.data.user.email; await nakonPrijave(); }
     else zaslonUlaz();
   })();
   if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
