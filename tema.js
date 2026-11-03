@@ -115,7 +115,7 @@
       <section class="kartica"><span class="oznaka">NAČIN PRIKAZA</span>
         <div class="segment" role="group" aria-label="Način prikaza">${[['sustav', 'Kao mobitel'], ['svijetlo', 'Svijetlo'], ['tamno', 'Tamno']].map(([k, n]) => `<button type="button" data-nacin="${k}" aria-pressed="${T.nacin === k}">${n}</button>`).join('')}</div></section>
       <p class="poruka" role="alert"></p>
-      ${klub && A.odjava ? '<div class="dno"><button class="veza" type="button" id="odjava">Odjava</button></div>' : ''}`, natrag);
+      ${A.odjava ? `<section class="kartica"><span class="oznaka">RAČUN</span><span class="sitno">Prijavljeni ste kao ${A.esc(A.S.email || '')}</span><button class="gumb drugi mali" type="button" id="odjava">Odjava</button></section>` : ''}`, natrag);
     const app = A.app, por = app.querySelector('.poruka');
     const od = app.querySelector('#odjava'); if (od) od.addEventListener('click', A.odjava);
     const ponovno = () => postavke(A, natrag);
