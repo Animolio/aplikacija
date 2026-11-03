@@ -181,12 +181,12 @@
 
   function zaslonOdobren() {
     const A = AG.A; const a = AG.a;
+    if (a.akademija_polozena && window.AnimolioTeren) return window.AnimolioTeren.prikazi(A, a, zaslonOdobren);
     A.prikazi(`${A.zaglavlje('ANIMOLIO AGENT')}
       <h1>${A.esc(a.ime_prezime)}</h1>
       <div class="kartica kod-kartica"><span class="oznaka">VAŠ KOD</span>
         <span class="kod-veliki">${A.esc(a.kod)}</span>
-        <span class="sitno">${a.akademija_polozena ? 'Kod je aktivan.' : 'Kod se aktivira nakon Akademije. Akademija se priprema.'}</span></div>
-      ${a.akademija_polozena && window.AnimolioPartner ? '<button class="gumb" id="noviPartner">Novi partner</button><div class="kartica"><span class="oznaka">MOJI PARTNERI</span><div id="mojiP" class="sitno">Učitavam…</div></div>' : ''}
+        <span class="sitno">Kod se aktivira nakon Akademije. Akademija se priprema.</span></div>
       <div class="dno"><button class="veza" id="odjava">Odjava</button></div>`);
     A.app.querySelector('#odjava').addEventListener('click', odjava);
     A.vezPostavke(zaslonOdobren);
