@@ -85,9 +85,11 @@
 
   /* ---------- Nakon prijave ---------- */
   async function nakonPrijave() {
-    if (window.AnimolioMozon && await window.AnimolioMozon.preuzmi(A)) return;
-    if (window.AnimolioPartner && await window.AnimolioPartner.preuzmi(A)) return;
-    if (window.AnimolioAgent && await window.AnimolioAgent.preuzmi(A)) return;
+    const tema = (u) => { if (window.AnimolioTema) window.AnimolioTema.uloga(u); };
+    if (window.AnimolioMozon && await window.AnimolioMozon.preuzmi(A)) return tema('mozon');
+    if (window.AnimolioPartner && await window.AnimolioPartner.preuzmi(A)) return tema('partner');
+    if (window.AnimolioAgent && await window.AnimolioAgent.preuzmi(A)) return tema('agent');
+    tema('klub');
     let { data: p } = await sb.from('profili').select('id, uloga, kod_popusta').eq('id', S.korisnik.id).maybeSingle();
     if (!p) {
       const ins = await sb.from('profili').insert({ id: S.korisnik.id }).select('id, uloga, kod_popusta').single();
@@ -176,7 +178,7 @@
   };
   function serumHtml(naziv) {
     const s = SERUMI[naziv]; const c = S.cijene[naziv];
-    return `<div class="serum"><b>${naziv}${c ? ' · ' + esc(c) : ''}</b><span class="sitno">${s.opis}</span>${s.upozorenje ? `<span class="upozorenje">${s.upozorenje}</span>` : ''}<button class="gumb mali" data-kupi="${naziv}">Kupi na animolio.eu</button></div>`;
+    return `<div class="serum"><span class="slovo" aria-hidden="true">${naziv[0]}</span><div class="opis"><b>${naziv}${c ? ' · ' + esc(c) : ''}</b><span class="sitno">${s.opis}</span>${s.upozorenje ? `<span class="upozorenje">${s.upozorenje}</span>` : ''}<button class="gumb mali naglaseni" data-kupi="${naziv}">Kupi na animolio.eu</button></div></div>`;
   }
   function preporuka() {
     const lj = S.ljubimci[0];
@@ -188,12 +190,19 @@
   }
   async function zaslonPocetna() {
     const lj = S.ljubimci[0];
-    prikazi(`<div class="vrh"><span class="prazno"></span><span class="marka">ANIMOLIO KLUB</span><span class="prazno"></span></div>
-      ${lj ? `<div class="kartica ljubimac"><div><div class="ime">${esc(lj.ime)}</div><span class="sitno">${lj.vrsta === 'pas' ? 'Pas' : 'Mačka'}</span></div></div>` : `<button class="gumb drugi" id="dodaj">Dodajte svog ljubimca</button>`}
+    const T = window.AnimolioTema; if (T) T.uloga('klub');
+    const foto = T && T.foto(); const izg = T ? T.izgled() : 'animolio';
+    const zag = foto ? 'foto' : (['sven', 'marcy', 'fluffy'].includes(izg) ? 'motiv' : '');
+    const zupcanik = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+    prikazi(`${zag ? `<div class="klub-zaglavlje ${zag}"${foto ? ` style="--foto:url(${foto})"` : ''} aria-hidden="true"></div>` : ''}
+      <div class="vrh"><span class="znacka">ANIMOLIO KLUB</span><button class="ikona" id="postavke" aria-label="Postavke">${zupcanik}</button></div>
+      ${zag ? `<div class="klub-prostor ${zag}"></div>` : ''}
+      ${lj ? `<div class="kartica ljubimac"><span class="avatar"${foto ? ` style="background-image:url(${foto})"` : ''}>${foto ? '' : esc(lj.ime[0].toUpperCase())}</span><div><div class="ime">${esc(lj.ime)}</div><span class="sitno">${lj.vrsta === 'pas' ? 'Pas' : 'Mačka'}</span></div></div>` : `<button class="gumb drugi" id="dodaj">Dodajte svog ljubimca</button>`}
       <div id="prep">${preporuka()}</div>
       <p class="poruka" role="alert"></p>
       <div class="dno"><button class="veza" id="odjava">Odjava</button></div>`);
     const d = app.querySelector('#dodaj'); if (d) d.addEventListener('click', zaslonLjubimac);
+    app.querySelector('#postavke').addEventListener('click', () => { if (T) T.postavke(A, zaslonPocetna); });
     app.querySelector('#odjava').addEventListener('click', async () => { await sb.auth.signOut(); S.korisnik = null; S.profil = null; S.ljubimci = []; zaslonUlaz(); });
     app.querySelector('#prep').addEventListener('click', (e) => { const k = e.target.closest('[data-kupi]'); if (k) kupi(k.dataset.kupi, k); });
     if (!Object.keys(S.cijene).length) { await ucitajCijene(); app.querySelector('#prep').innerHTML = preporuka(); }
