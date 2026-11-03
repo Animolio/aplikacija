@@ -117,6 +117,12 @@ textarea:focus { outline: 2px solid var(--naglasak); outline-offset: 1px; border
 .stanje { font-size: 12px; font-weight: 700; color: var(--blago); }
 .stanje.da { color: var(--dobro); }
 .red-gumbi { display: flex; flex-direction: column; gap: 4px; }
+textarea { font-weight: 400; }
+details.blog summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+details.blog summary::-webkit-details-marker { display: none; }
+details.blog summary::after { content: "Otvori \25BE"; font-size: 13px; font-weight: 600; color: var(--naglasak); }
+details.blog[open] summary::after { content: "Zatvori \25B4"; }
+.naslov-sazetak { font-family: var(--naslov); font-weight: 600; font-size: 19px; line-height: 1.25; }
 
 /* Postavke: izgledi */
 .izgledi { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
