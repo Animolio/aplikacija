@@ -81,6 +81,8 @@ input[type=checkbox] { accent-color: var(--naglasak); }
 .serum .opis { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .serum b { font-size: 16px; }
 .upozorenje { font-size: 13px; font-weight: 600; color: var(--greska); }
+.uporaba { font-size: 13px; line-height: 1.45; color: var(--blago); }
+.uporaba b { font-size: 13px; color: var(--tekst); }
 
 .ljubimac-tekst { flex: 1; min-width: 0; }
 .veza.mala { min-height: 44px; padding: 0 4px; font-size: 14px; }
@@ -99,6 +101,7 @@ input[type=checkbox] { accent-color: var(--naglasak); }
 .poruka-begi.tipka { color: var(--blago); }
 .begi-unos { display: flex; gap: 8px; }
 .begi-unos .gumb { width: auto; padding: 0 18px; flex: none; }
+.begi-kupi { margin-top: 8px; }
 
 /* Postavke: izgledi */
 .izgledi { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
