@@ -111,8 +111,10 @@
 
   async function kodovi(g) {
     const d = await rpc('mozon_kodovi');
-    g.innerHTML = naslov('Kodovi za popust', 'Narudžbe se broje od 2.11.2026., kad je n8n počeo upisivati prodaje po kodu. Gašenje koda u Wixu dodaje se s n8n tokom.') + `<table><thead><tr><th>Kod</th><th>Vrsta</th><th>Naziv</th><th>Aktivan</th><th class="br">Narudžbi</th><th class="br">Iznos</th><th class="br">Popust</th><th>Zadnja</th></tr></thead><tbody>
-      ${d.map((k) => `<tr><td><b>${esc(k.kod)}</b></td><td>${esc(k.vrsta)}</td><td>${esc(k.naziv)}</td><td>${k.aktivan ? 'Da' : 'Ne'}</td><td class="br">${k.narudzbi}</td><td class="br">${eur(k.iznos_eur)}</td><td class="br">${eur(k.popust_eur)}</td><td>${datum(k.zadnja)}</td></tr>`).join('')}</tbody></table>`;
+    const VR = { partner: 'Partner', privatni: 'Privatni', test: 'Test', donacija: 'Donacija', animolio: 'Animolio' };
+    g.innerHTML = naslov('Kodovi za popust', 'Narudžbe se broje od 2.11.2026. Kod bivšeg partnera prelazi pod Animolio: prodaje do prijenosa pripadaju partneru i agentu, prodaje poslije prijenosa Animoliju. „Wix auto” znači da je kupon u Wixu stvorio n8n.') + `<table><thead><tr><th>Kod</th><th>Vrsta</th><th>Naziv / partner</th><th>Agent</th><th>Wix auto</th><th class="br">Narudžbi</th><th class="br">Iznos</th><th class="br">Nakon prijenosa: narudžbi</th><th class="br">Nakon prijenosa: iznos</th><th class="br">Popust</th><th>Zadnja</th></tr></thead><tbody>
+      ${d.map((k) => `<tr><td><b>${esc(k.kod)}</b>${k.aktivan ? '' : '<br><span class="sitno">neaktivan</span>'}</td><td>${VR[k.vrsta] || esc(k.vrsta)}${k.preneseno ? `<br><span class="sitno">od ${datum(k.preneseno)}</span>` : ''}</td><td>${esc(k.partner || k.naziv)}</td><td>${k.agent ? esc(k.agent) : ''}</td><td>${k.u_wixu ? 'Da' : ''}</td>
+        <td class="br">${k.narudzbi_partner}</td><td class="br">${eur(k.iznos_partner)}</td><td class="br">${k.preneseno ? k.narudzbi_animolio : ''}</td><td class="br">${k.preneseno ? eur(k.iznos_animolio) : ''}</td><td class="br">${eur(k.popust_eur)}</td><td>${datum(k.zadnja)}</td></tr>`).join('')}</tbody></table>`;
   }
 
   async function prodaje(g) {
