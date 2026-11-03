@@ -97,6 +97,7 @@
     const { data: lj } = await sb.from('ljubimci').select('id, ime, vrsta').order('id');
     S.ljubimci = lj || [];
     if (S.profil && !S.profil.kod_popusta && (S.prviPut || kodIzQr())) return zaslonPopust();
+    if (S.profil && !S.profil.kod_popusta) { const { data: kk } = await sb.rpc('dodijeli_klub_kod'); if (kk) S.profil.kod_popusta = kk; }
     if (S.prviPut && !S.ljubimci.length) return zaslonLjubimac();
     zaslonPocetna();
   }
@@ -112,7 +113,16 @@
         <div class="dno"><button class="gumb" type="submit">Uključi</button><button class="veza" type="button" id="nemam">Nemam kod</button></div>
       </form>`);
     const dalje = () => { zaboraviQr(); if (S.prviPut && !S.ljubimci.length) zaslonLjubimac(); else zaslonPocetna(); };
-    app.querySelector('#nemam').addEventListener('click', dalje);
+    app.querySelector('#nemam').addEventListener('click', async (e) => {
+      const b = e.currentTarget; zauzeto(b, true);
+      const { data: kk, error } = await sb.rpc('dodijeli_klub_kod');
+      zauzeto(b, false);
+      if (error || !kk) return greska('Popust nije uključen. Pokušajte ponovno.');
+      S.profil.kod_popusta = kk;
+      app.querySelector('#potvrda').innerHTML = `<div class="okvir">✓ <span>Kao član Animolio Kluba imate 10 % popusta. Vaš osobni kod je <b>${esc(kk)}</b> i automatski se uključuje na blagajni animolio.eu.</span></div>`;
+      const g = app.querySelector('#f button[type=submit]'); g.textContent = 'Dalje'; g.type = 'button'; g.onclick = dalje; b.remove();
+      const polje = app.querySelector('#kp'); if (polje) polje.closest('label').remove();
+    });
     app.querySelector('#f').addEventListener('submit', async (e) => {
       e.preventDefault();
       const b = e.submitter; const k = app.querySelector('#kp').value.trim().toUpperCase();
@@ -216,7 +226,10 @@
       const tok = await wixToken();
       await wix(tok, 'POST', '/ecom/v1/carts/current/add-to-cart', { lineItems: [{ catalogReference: { appId: C.wixStoresAppId, catalogItemId: C.proizvodi[naziv] }, quantity: 1 }] });
       if (S.profil && S.profil.kod_popusta) {
-        try { await wix(tok, 'PATCH', '/ecom/v1/carts/current', { couponCode: S.profil.kod_popusta }); } catch (e) { /* kod ne vrijedi: blagajna bez popusta */ }
+        for (let pokusaj = 0; pokusaj < 3; pokusaj++) {
+          try { await wix(tok, 'PATCH', '/ecom/v1/carts/current', { couponCode: S.profil.kod_popusta }); break; }
+          catch (e) { if (pokusaj < 2) await new Promise((r) => setTimeout(r, 4000)); /* novi kupon u Wixu nastaje za desetak sekundi; inače blagajna bez popusta */ }
+        }
       }
       const k = await wix(tok, 'POST', '/ecom/v1/carts/current/create-checkout', { channelType: 'WEB' });
       const r = await wix(tok, 'POST', '/redirect-session/v1/redirect-session', { ecomCheckout: { checkoutId: k.checkoutId }, callbacks: { postFlowUrl: C.povratak } });
