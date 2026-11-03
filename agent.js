@@ -98,12 +98,12 @@
     A.prikazi(`${vrhAgent(A, true)}${traka(2)}
       <h1 style="font-size:26px">Ugovor o suradnji</h1>
       <div class="okvir" style="font-size:13px">Probna verzija: tekst ugovora još nije konačan.</div>
-      <div id="ugovor" tabindex="0" style="height:220px;overflow-y:auto;border:1px solid var(--rub);border-radius:14px;background:var(--kartica);padding:16px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5;color:#4F3E33">${tekst}<span style="font-weight:700;text-align:center;color:var(--tekst)">Kraj ugovora</span></div>
+      <div id="ugovor" tabindex="0" style="height:220px;overflow-y:auto;border:1px solid var(--rub);border-radius:14px;background:var(--kartica);padding:16px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5;color:var(--tekst)">${tekst}<span style="font-weight:700;text-align:center;color:var(--tekst)">Kraj ugovora</span></div>
       <div id="korak2" style="display:flex;flex-direction:column;gap:10px;opacity:.4;pointer-events:none">
         <button class="gumb drugi" type="button" id="posaljiKod">Pošalji kod za potpis na ${A.esc(A.S.korisnik.email)}</button>
         <input type="text" id="kodPotpis" class="kod" inputmode="numeric" autocomplete="one-time-code" maxlength="10" aria-label="Kod za potpis" placeholder="">
-        <div style="position:relative;height:150px;border:1.5px dashed #BBA996;border-radius:14px;background:var(--kartica)">
-          <span style="position:absolute;left:14px;top:10px;font-size:12px;font-weight:600;color:var(--blago)">Potpis prstom</span>
+        <div style="position:relative;height:150px;border:1.5px dashed #BBA996;border-radius:14px;background:#FFFFFF">
+          <span style="position:absolute;left:14px;top:10px;font-size:12px;font-weight:600;color:#6E5C50">Potpis prstom</span>
           <button type="button" id="obrisi" style="position:absolute;right:10px;top:8px;border:1px solid var(--rub);background:var(--kartica);color:var(--tekst);border-radius:10px;padding:0 12px;font:inherit;font-size:13px;font-weight:600;height:36px">Obriši</button>
           <canvas id="platno" style="width:100%;height:100%;touch-action:none;display:block"></canvas>
         </div>
