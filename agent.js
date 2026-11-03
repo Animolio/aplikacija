@@ -189,8 +189,14 @@
         <span class="okvir" style="font-size:14px">${a.akademija_polozena ? 'Kod je aktivan' : 'Aktivira se nakon Akademije'}</span>
         ${a.akademija_polozena ? '' : '<p class="sitno" style="max-width:300px">Akademija se priprema.</p>'}
       </div>
+      ${a.akademija_polozena && window.AnimolioPartner ? '<button class="gumb" id="noviPartner">Novi partner</button><div class="kartica"><span class="oznaka">MOJI PARTNERI</span><div id="mojiP" class="sitno">Učitavam…</div></div>' : ''}
       <div class="dno"><button class="veza" id="odjava">Odjava</button></div>`);
     A.app.querySelector('#odjava').addEventListener('click', odjava);
+    const np = A.app.querySelector('#noviPartner');
+    if (np) {
+      np.addEventListener('click', () => window.AnimolioPartner.agentQR(A, a, zaslonOdobren));
+      window.AnimolioPartner.mojiPartneri(A).then((h) => { const el = A.app.querySelector('#mojiP'); if (el) { el.className = ''; el.innerHTML = h; } });
+    }
   }
 
   function zaslonKraj() {
