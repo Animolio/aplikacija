@@ -87,7 +87,27 @@
     });
   }
 
-  async function partneri(g) { g.innerHTML = naslov('Partneri') + '<p class="sitno">Ova sekcija dolazi s partnerskim dijelom aplikacije.</p>'; }
+  async function partneri(g) {
+    const d = await rpc('mozon_partneri');
+    const ST = { prijava: 'Čeka odobrenje', odobren: 'Aktivan', raskinut: 'Raskinut' };
+    g.innerHTML = naslov('Partneri', 'Odbijanjem se podaci prijave brišu. Raskidom se kod partnera gasi u aplikaciji; gašenje u Wixu dodaje se s n8n tokom.') + (d.length ? `<table><thead><tr><th>Naziv</th><th>OIB</th><th>Adresa</th><th>E-pošta</th><th>Agent</th><th>Kod</th><th>Pravila</th><th>Stanje</th><th></th></tr></thead><tbody>
+      ${d.map((p) => `<tr data-id="${p.id}"><td><b>${esc(p.naziv)}</b><br><span class="sitno">${datum(p.stvoreno)}</span></td><td>${esc(p.oib)}</td><td>${esc(p.adresa)}</td><td>${esc(p.email)}</td>
+        <td>${p.agent ? esc(p.agent) + ' · ' + esc(p.agent_kod) : '<span class="sitno">bez agenta</span>'}</td><td><b>${esc(p.kod || '')}</b></td>
+        <td>${p.pravila_procitana ? 'Potvrđeno ' + datum(p.pravila_procitana) : ''}</td>
+        <td><span class="oznakaS ${p.stanje === 'prijava' ? 'ceka' : ''}">${ST[p.stanje] || ''}</span></td>
+        <td>${p.stanje === 'prijava' ? '<button class="mali glavni" data-a="odobri">Odobri</button> <button class="mali" data-a="odbij">Odbij</button>' : (p.stanje === 'odobren' ? '<button class="mali" data-a="raskid">Raskid suradnje</button>' : '')}</td></tr>`).join('')}</tbody></table><p class="poruka" role="alert"></p>` : '<p class="sitno">Još nema prijava partnera.</p>');
+    const tb = g.querySelector('tbody'); if (!tb) return;
+    tb.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-a]'); if (!b) return; const id = b.closest('tr').dataset.id; const por = g.querySelector('.poruka');
+      if (b.dataset.a === 'odbij' && b.textContent !== 'Potvrdi brisanje') { b.textContent = 'Potvrdi brisanje'; return; }
+      if (b.dataset.a === 'raskid' && b.textContent !== 'Potvrdi raskid') { b.textContent = 'Potvrdi raskid'; return; }
+      b.disabled = true;
+      try {
+        if (b.dataset.a === 'odobri') { const k = await rpc('mozon_odobri_partnera', { partner: id }); por.style.color = 'var(--tekst)'; por.textContent = `Odobreno. Kod partnera: ${k}.`; setTimeout(prikazi, 1500); }
+        else { await rpc(b.dataset.a === 'odbij' ? 'mozon_odbij_partnera' : 'mozon_raskini_partnera', { partner: id }); prikazi(); }
+      } catch (er) { b.disabled = false; por.style.color = ''; por.textContent = 'Radnja nije uspjela. Pokušajte ponovno.'; }
+    });
+  }
 
   async function kodovi(g) {
     const d = await rpc('mozon_kodovi');
