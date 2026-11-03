@@ -174,7 +174,7 @@
       const { data } = await A.sb.from('agenti').select('*').eq('id', A.S.korisnik.id).maybeSingle();
       A.zauzeto(e.target, false);
       AG.a = data;
-      if (data && data.stanje === 'odobren') zaslonOdobren(); else A.greska('Prijava još čeka odobrenje.');
+      if (data && data.stanje === 'odobren') zaslonOdobren(); else { A.greska('Prijava još čeka odobrenje.'); dobro(true); }
     });
     A.app.querySelector('#odjava').addEventListener('click', odjava);
   }
