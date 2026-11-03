@@ -103,6 +103,14 @@ input[type=checkbox] { accent-color: var(--naglasak); }
 .begi-unos .gumb { width: auto; padding: 0 18px; flex: none; }
 .begi-kupi { margin-top: 8px; }
 
+/* Urednica savjeta */
+textarea { border-radius: var(--r); border: 1.5px solid var(--rub); background: var(--kartica); padding: 12px 14px; font: inherit; font-size: 16px; line-height: 1.5; color: var(--tekst); width: 100%; resize: vertical; }
+textarea:focus { outline: 2px solid var(--naglasak); outline-offset: 1px; border-color: var(--naglasak); }
+.red-oznaka { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.stanje { font-size: 12px; font-weight: 700; color: var(--blago); }
+.stanje.da { color: var(--dobro); }
+.red-gumbi { display: flex; flex-direction: column; gap: 4px; }
+
 /* Postavke: izgledi */
 .izgledi { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .izgled-gumb { border: 0; background: none; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; font: inherit; font-size: 11.5px; font-weight: 600; color: var(--blago); cursor: pointer; min-width: 0; }
