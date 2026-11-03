@@ -35,7 +35,8 @@ td.br, th.br { text-align: right; font-variant-numeric: tabular-nums; }
 .plocica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
 .plocica b { font-family: Georgia, serif; font-size: 32px; font-weight: 600; }
 .potpisImg { max-width: 260px; max-height: 90px; border: 1px solid var(--rub); border-radius: 8px; background: #fff; display: block; }
-.plocica input { height: 42px; border: 1px solid var(--rub); border-radius: 10px; padding: 0 12px; font: inherit; font-size: 15px; color: var(--tekst); background: #fff; }
+.plocica input, .glavno select { height: 42px; border: 1px solid var(--rub); border-radius: 10px; padding: 0 12px; font: inherit; font-size: 15px; color: var(--tekst); background: #fff; }
+td.br input { width: 110px; text-align: right; }
 .prijavaM { max-width: 420px; margin: 12vh auto; padding: 0 24px; display: flex; flex-direction: column; gap: 18px; }
 @media (max-width: 760px) { .okvirM { grid-template-columns: 1fr; } .bocno { border-right: 0; border-bottom: 1px solid var(--rub); flex-direction: row; flex-wrap: wrap; } .bocno .marka { width: 100%; margin-bottom: 8px; } .glavno { padding: 20px 16px; } table { display: block; overflow-x: auto; } }
 </style>
@@ -45,6 +46,6 @@ td.br, th.br { text-align: right; font-variant-numeric: tabular-nums; }
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k" crossorigin="anonymous"></script>
-<script src="mozon-racunalo.js?v=20261103e"></script>
+<script src="mozon-racunalo.js?v=20261103f"></script>
 </body>
 </html>
