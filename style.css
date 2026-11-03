@@ -1,7 +1,7 @@
 /* Animolio aplikacija — izgled. Boje postavlja tema.js; ovdje su zadane za Animolio svijetli. */
 :root {
-  --pozadina: #FDFCF8; --kartica: #FFFFFF; --kartica2: #F6F2EC; --tekst: #3A2A21; --blago: #6E5C50; --rub: #E6DED4;
-  --naglasak: #8B6B3D; --naglasak-tekst: #FFFFFF; --naglasak-blago: #F7E1D7; --hero: #3A2A21; --hero-tekst: #FDFCF8;
+  --pozadina: #FDFCF8; --kartica: #FFFFFF; --kartica2: #FBEEE8; --tekst: #3A2A21; --blago: #6E5C50; --rub: #EEDFD6;
+  --naglasak: #3A2A21; --naglasak-tekst: #FDFCF8; --naglasak-blago: #F7E1D7; --hero: #F7E1D7; --hero-tekst: #3A2A21;
   --greska: #9B2C2C; --dobro: #2F7A4A;
   --naslov: "Fraunces", Georgia, "Times New Roman", serif;
   --tijelo: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
@@ -69,6 +69,7 @@ input[type=checkbox] { accent-color: var(--naglasak); }
 [data-nacin=tamno] .klub-zaglavlje.motiv::before { mix-blend-mode: normal; opacity: .42; }
 .klub-zaglavlje.motiv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 55%, var(--pozadina)); }
 .znacka { font-weight: 700; letter-spacing: .24em; font-size: 12px; color: var(--tekst); background: color-mix(in srgb, var(--kartica) 82%, transparent); border-radius: 999px; padding: 7px 12px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.klub-zaglavlje.boja { height: 210px; background: linear-gradient(to bottom, var(--hero), var(--pozadina)); }
 .klub-prostor { height: 120px; flex: none; }
 .klub-prostor.foto { height: 170px; }
 .ljubimac { display: flex; align-items: center; gap: 14px; flex-direction: row; }
@@ -81,12 +82,30 @@ input[type=checkbox] { accent-color: var(--naglasak); }
 .serum b { font-size: 16px; }
 .upozorenje { font-size: 13px; font-weight: 600; color: var(--greska); }
 
+.ljubimac-tekst { flex: 1; min-width: 0; }
+.veza.mala { min-height: 44px; padding: 0 4px; font-size: 14px; }
+.popust-red { display: flex; align-items: baseline; gap: 10px; }
+.postotak { font-family: var(--naslov); font-weight: 600; font-size: 34px; line-height: 1; color: var(--tekst); }
+.kod-red { display: flex; align-items: center; gap: 10px; }
+.kod-tekst { flex: 1; min-width: 0; height: 46px; display: flex; align-items: center; padding: 0 14px; border-radius: var(--r); background: var(--kartica2); font-weight: 700; letter-spacing: .12em; font-size: 16px; user-select: all; -webkit-user-select: all; overflow: hidden; text-overflow: ellipsis; }
+.kod-red .gumb { width: auto; padding: 0 16px; flex: none; }
+.savjet p { font-size: 15px; }
+
+/* Begi */
+.razgovor { flex: 1; min-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.poruka-begi, .poruka-ja { max-width: 86%; padding: 11px 14px; border-radius: 18px; font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; }
+.poruka-begi { align-self: flex-start; background: var(--kartica); border: 1px solid var(--rub); border-bottom-left-radius: 6px; }
+.poruka-ja { align-self: flex-end; background: var(--naglasak); color: var(--naglasak-tekst); border-bottom-right-radius: 6px; }
+.poruka-begi.tipka { color: var(--blago); }
+.begi-unos { display: flex; gap: 8px; }
+.begi-unos .gumb { width: auto; padding: 0 18px; flex: none; }
+
 /* Postavke: izgledi */
 .izgledi { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .izgled-gumb { border: 0; background: none; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; font: inherit; font-size: 11.5px; font-weight: 600; color: var(--blago); cursor: pointer; min-width: 0; }
 .izgled-gumb span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .izgled-slika { width: 100%; aspect-ratio: 1; border-radius: var(--r); border: 1px solid var(--rub); background: #FFFFFF center/cover no-repeat; display: flex; align-items: center; justify-content: center; color: var(--naglasak); }
-.izgled-slika.slovo { background: #FDFCF8; color: #8B6B3D; font-family: var(--naslov); font-weight: 600; font-size: 22px; }
+.izgled-slika.slovo { background: #F7E1D7; color: #3A2A21; font-family: var(--naslov); font-weight: 600; font-size: 22px; }
 .izgled-slika.foto { border-style: dashed; background-color: var(--kartica2); }
 .izgled-gumb[aria-pressed=true] { color: var(--tekst); }
 .izgled-gumb[aria-pressed=true] .izgled-slika { border: 2px solid var(--naglasak); box-shadow: 0 0 0 3px var(--naglasak-blago); }
