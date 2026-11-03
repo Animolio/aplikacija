@@ -117,7 +117,7 @@
   PT.mojiPartneri = async function (A) {
     const { data } = await A.sb.rpc('moji_partneri');
     if (!data || !data.length) return '<p class="sitno">Još nemate partnera.</p>';
-    const st = { prijava: 'Čeka odobrenje', odobren: 'Aktivan', raskinut: 'Raskinut' };
+    const st = { prijava: 'Čeka odobrenje', odobren: 'Aktivan', raskinut: 'Suradnja završena' };
     return data.map((p) => `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #F0E9E0"><b>${A.esc(p.naziv)}</b><span class="sitno">${st[p.stanje] || ''}${p.kod ? ' · ' + A.esc(p.kod) : ''}</span></div>`).join('');
   };
 
