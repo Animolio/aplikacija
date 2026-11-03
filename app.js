@@ -85,6 +85,7 @@
   /* ---------- Nakon prijave ---------- */
   async function nakonPrijave() {
     if (window.AnimolioMozon && await window.AnimolioMozon.preuzmi(A)) return;
+    if (window.AnimolioPartner && await window.AnimolioPartner.preuzmi(A)) return;
     if (window.AnimolioAgent && await window.AnimolioAgent.preuzmi(A)) return;
     let { data: p } = await sb.from('profili').select('id, uloga, kod_popusta').eq('id', S.korisnik.id).maybeSingle();
     if (!p) {
