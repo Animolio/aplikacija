@@ -55,14 +55,15 @@
   const T = { kartica: 'pocetna' };
 
   async function ucitaj(A) {
-    const [po, pr, pd, ob, pt, zr, is] = await Promise.all([
-      A.sb.from('agent_postavke').select('provizija_posto, dana_cekanja, dan_isplate, akademija_postoji').maybeSingle(),
+    const [po, pr, pd, ob, pt, zr, is, rz] = await Promise.all([
+      A.sb.from('agent_postavke').select('dana_cekanja, dan_isplate, akademija_postoji').maybeSingle(),
       A.sb.rpc('agent_pregled'),
       A.sb.rpc('agent_prodaje'),
       A.sb.from('obavijesti').select('id, naslov, tekst, kljucna, od').eq('za', 'agent').order('od', { ascending: false }),
       A.sb.from('obavijesti_potvrde').select('obavijest_id'),
       A.sb.rpc('agent_zarada'),
-      A.sb.from('isplate').select('obracun_od, obracun_do, iznos_eur, isplaceno').order('obracun_do', { ascending: false })
+      A.sb.from('isplate').select('obracun_od, obracun_do, iznos_eur, isplaceno').order('obracun_do', { ascending: false }),
+      A.sb.rpc('agent_razina')
     ]);
     const potvrdeno = new Set((pt.data || []).map((x) => x.obavijest_id));
     return {
@@ -72,6 +73,7 @@
       prodaje: pd.data || [],
       zarada: (Array.isArray(zr.data) ? zr.data[0] : zr.data) || {},
       isplate: is.data || [],
+      razina: (Array.isArray(rz.data) ? rz.data[0] : rz.data) || null,
       obavijesti: (ob.data || []).filter((o) => !potvrdeno.has(o.id))
     };
   }
@@ -156,7 +158,7 @@
     const ime = String(a.ime_prezime || '').split(' ')[0];
     const inic = String(a.ime_prezime || '').split(' ').filter(Boolean).slice(0, 2).map((s) => s[0].toUpperCase()).join('');
     const proba = !d.postavke.akademija_postoji;
-    return `<div class="agent-glava"><span class="inicijali">${A.esc(inic)}</span><div class="stavka-tekst"><b>${pozdrav}, ${A.esc(ime)}</b><span class="sitno">Kod ${A.esc(a.kod)}${proba ? ' · proba: Akademija označena ručno' : ''}</span></div></div>
+    return `<div class="agent-glava"><span class="inicijali">${A.esc(inic)}</span><div class="stavka-tekst"><b>${pozdrav}, ${A.esc(ime)}</b><span class="sitno">Kod ${A.esc(a.kod)}${proba ? ' · proba: Akademija označena ručno' : ''}</span>${d.razina ? `<span class="sitno">Razina ${A.esc(d.razina.naziv)} · ${eur(d.razina.po_bocici)} € po bočici</span>` : ''}</div></div>
       ${obavijestiHtml(A, d)}
       ${d.greska ? '<div class="okvir">Podaci o partnerima i prodajama trenutno se ne mogu učitati.</div>' : zaradaKartica(d)}
       <div class="red-oznaka"><span class="oznaka">PLAN ZA DANAS</span>${ruta ? `<a class="veza mala" href="${ruta}" target="_blank" rel="noopener">Otvori rutu</a>` : ''}</div>
