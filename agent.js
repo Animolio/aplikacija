@@ -181,17 +181,15 @@
 
   function zaslonOdobren() {
     const A = AG.A; const a = AG.a;
-    A.prikazi(`${vrhAgent(A, false)}${traka(4)}
-      <div class="sredina centar" style="align-items:center">
-        <span class="sitno" style="font-weight:600">Suradnja je odobrena</span>
-        <span class="oznaka" style="letter-spacing:.2em">VAŠ KOD</span>
-        <span style="font-family:Georgia,serif;font-weight:600;font-size:52px;line-height:1">${A.esc(a.kod)}</span>
-        <span class="okvir" style="font-size:14px">${a.akademija_polozena ? 'Kod je aktivan' : 'Aktivira se nakon Akademije'}</span>
-        ${a.akademija_polozena ? '' : '<p class="sitno" style="max-width:300px">Akademija se priprema.</p>'}
-      </div>
+    A.prikazi(`${A.zaglavlje('ANIMOLIO AGENT')}
+      <h1>${A.esc(a.ime_prezime)}</h1>
+      <div class="kartica kod-kartica"><span class="oznaka">VAŠ KOD</span>
+        <span class="kod-veliki">${A.esc(a.kod)}</span>
+        <span class="sitno">${a.akademija_polozena ? 'Kod je aktivan.' : 'Kod se aktivira nakon Akademije. Akademija se priprema.'}</span></div>
       ${a.akademija_polozena && window.AnimolioPartner ? '<button class="gumb" id="noviPartner">Novi partner</button><div class="kartica"><span class="oznaka">MOJI PARTNERI</span><div id="mojiP" class="sitno">Učitavam…</div></div>' : ''}
       <div class="dno"><button class="veza" id="odjava">Odjava</button></div>`);
     A.app.querySelector('#odjava').addEventListener('click', odjava);
+    A.vezPostavke(zaslonOdobren);
     const np = A.app.querySelector('#noviPartner');
     if (np) {
       np.addEventListener('click', () => window.AnimolioPartner.agentQR(A, a, zaslonOdobren));
