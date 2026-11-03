@@ -77,9 +77,9 @@
   ];
   function pocetna() {
     const A = PT.A; const p = PT.p; const link = adresa() + '?kod=' + encodeURIComponent(p.kod);
-    A.prikazi(`${vrhP(A, false)}<h1>${A.esc(p.naziv)}</h1>
-      <div class="kartica" style="flex-direction:row;align-items:center;gap:16px">${qrSvg(link, 120)}
-        <div style="display:flex;flex-direction:column;gap:6px"><span class="oznaka">KOD ZA KUPCE</span><span style="font-family:Georgia,serif;font-weight:600;font-size:28px;line-height:1">${A.esc(p.kod)}</span></div></div>
+    A.prikazi(`${A.zaglavlje('ANIMOLIO PARTNER')}<h1>${A.esc(p.naziv)}</h1>
+      <div class="kartica" style="flex-direction:row;align-items:center;gap:16px"><div class="qr-okvir">${qrSvg(link, 120)}</div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span class="oznaka">KOD ZA KUPCE</span><span class="kod-srednji">${A.esc(p.kod)}</span></div></div>
       <button class="gumb drugi" id="dijeli">Podijeli poveznicu za kupce</button>
       <div class="kartica"><span class="oznaka">AKADEMIJA ZA PARTNERE</span>
         <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.45">${PRAVILA.map((t) => `<li>${t}</li>`).join('')}</ul>
@@ -87,6 +87,7 @@
       </div>
       <p class="poruka" role="alert"></p><div class="dno"><button class="veza" id="odjava">Odjava</button></div>`);
     A.app.querySelector('#odjava').addEventListener('click', odjava);
+    A.vezPostavke(pocetna);
     A.app.querySelector('#dijeli').addEventListener('click', async () => {
       try { if (navigator.share) await navigator.share({ title: 'Animolio Klub', url: link }); else { await navigator.clipboard.writeText(link); dobro(A, 'Poveznica je kopirana.'); } } catch (e) {}
     });
