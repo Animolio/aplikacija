@@ -33,7 +33,7 @@
         <label class="polje">OIB<input type="text" id="oib" inputmode="numeric" maxlength="11"></label>
         <label class="polje">Adresa lokacije<input type="text" id="adr" maxlength="160" autocomplete="street-address"></label>
         <label class="polje">E-pošta<input type="email" value="${A.esc(A.S.korisnik.email)}" disabled></label>
-        <label style="display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.45;color:#4F3E33"><input type="checkbox" id="priv" style="width:22px;height:22px;flex:none;margin:0"> <span>Pročitao/la sam <a href="https://www.animolio.eu/zastita-privatnosti" target="_blank" rel="noopener">Zaštitu privatnosti</a>.</span></label>
+        <label style="display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.45;color:var(--tekst)"><input type="checkbox" id="priv" style="width:22px;height:22px;flex:none;margin:0"> <span>Pročitao/la sam <a href="https://www.animolio.eu/zastita-privatnosti" target="_blank" rel="noopener">Zaštitu privatnosti</a>.</span></label>
         <p class="poruka" role="alert"></p>
         <div class="dno"><button class="gumb" type="submit">Pošalji prijavu</button></div>
       </form>`);
@@ -118,7 +118,7 @@
     const { data } = await A.sb.rpc('moji_partneri');
     if (!data || !data.length) return '<p class="sitno">Još nemate partnera.</p>';
     const st = { prijava: 'Čeka odobrenje', odobren: 'Aktivan', raskinut: 'Suradnja završena' };
-    return data.map((p) => `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #F0E9E0"><b>${A.esc(p.naziv)}</b><span class="sitno">${st[p.stanje] || ''}${p.kod ? ' · ' + A.esc(p.kod) : ''}</span></div>`).join('');
+    return data.map((p) => `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--rub)"><b>${A.esc(p.naziv)}</b><span class="sitno">${st[p.stanje] || ''}${p.kod ? ' · ' + A.esc(p.kod) : ''}</span></div>`).join('');
   };
 
   window.AnimolioPartner = PT;
