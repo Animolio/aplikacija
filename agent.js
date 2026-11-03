@@ -20,7 +20,7 @@
     return ((11 - a) % 10) === Number(oib[10]);
   }
   function ibanIspravan(iban) {
-    if (!/^HR\d{19}$/.test(iban)) return false;
+    if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(iban)) return false;
     const pr = (iban.slice(4) + iban.slice(0, 4)).replace(/[A-Z]/g, (c) => String(c.charCodeAt(0) - 55));
     let ost = 0; for (const z of pr) ost = (ost * 10 + Number(z)) % 97;
     return ost === 1;
@@ -29,6 +29,7 @@
     const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
     return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, '0')).join('');
   }
+  const dobro = (da) => { const p = document.querySelector('.poruka'); if (p) p.style.color = da ? 'var(--tekst)' : ''; };
   const vrhAgent = (A, natrag) => A.vrh(natrag).replace('>ANIMOLIO<', '>ANIMOLIO AGENT<');
   const traka = (k) => `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">${[1, 2, 3, 4].map((i) => `<div style="height:4px;border-radius:4px;background:${i <= k ? 'var(--tekst)' : 'var(--rub)'}"></div>`).join('')}</div>`;
 
@@ -66,7 +67,7 @@
         <label class="polje">Ime i prezime<input type="text" id="ime" autocomplete="name" maxlength="80" value="${A.esc(a.ime_prezime || '')}"></label>
         <label class="polje">OIB<input type="text" id="oib" inputmode="numeric" maxlength="11" value="${A.esc(a.oib || '')}"></label>
         <label class="polje">E-pošta<input type="email" value="${A.esc(A.S.korisnik.email)}" disabled></label>
-        <label class="polje">IBAN za isplatu provizije<input type="text" id="iban" autocapitalize="characters" placeholder="HR…" value="${A.esc(a.iban || '')}"></label>
+        <label class="polje">IBAN za isplatu provizije<input type="text" id="iban" autocapitalize="characters" placeholder="HR… ili LT… (Revolut)" value="${A.esc(a.iban || '')}"></label>
         <p class="sitno">Ako prijava ne bude odobrena, podatke brišemo.</p>
         <p class="poruka" role="alert"></p>
         <div class="dno"><button class="gumb" type="submit">Dalje</button><button class="veza" type="button" id="odustani">Odustani</button></div>
@@ -80,7 +81,7 @@
       const iban = A.app.querySelector('#iban').value.toUpperCase().replace(/\s/g, '');
       if (ime.length < 3 || !ime.includes(' ')) return A.greska('Upišite ime i prezime.');
       if (!oibIspravan(oib)) return A.greska('OIB nije ispravan. Provjerite znamenke.');
-      if (!ibanIspravan(iban)) return A.greska('IBAN nije ispravan. Upišite hrvatski IBAN koji počinje s HR.');
+      if (!ibanIspravan(iban)) return A.greska('IBAN nije ispravan. Provjerite slova i znamenke.');
       A.zauzeto(b, true);
       const r = AG.a
         ? await A.sb.from('agenti').update({ ime_prezime: ime, oib, iban }).eq('id', A.S.korisnik.id).select('*').single()
@@ -123,7 +124,7 @@
       A.zauzeto(e.target, true);
       const { error } = await A.sb.auth.signInWithOtp({ email: A.S.korisnik.email, options: { shouldCreateUser: false } });
       A.zauzeto(e.target, false);
-      A.greska(error ? 'Kod nije poslan. Pričekajte minutu pa pokušajte ponovno.' : 'Kod je poslan. Upišite ga ispod.');
+      A.greska(error ? 'Kod nije poslan. Pričekajte minutu pa pokušajte ponovno.' : 'Kod je poslan. Upišite ga ispod.'); dobro(!error);
     });
     const kp = A.app.querySelector('#kodPotpis');
     const provjeriKod = async (rucno) => {
@@ -132,7 +133,7 @@
       if (t.length < 8 && !(rucno && t.length >= 6)) { return osvjezi(); }
       const { error } = await A.sb.auth.verifyOtp({ email: A.S.korisnik.email, token: t, type: 'email' });
       kodOk = !error; kp.style.borderColor = error ? 'var(--greska)' : 'var(--tekst)';
-      A.greska(error ? 'Kod nije ispravan ili je istekao.' : 'Kod je potvrđen.');
+      A.greska(error ? 'Kod nije ispravan ili je istekao.' : 'Kod je potvrđen.'); dobro(!error);
       if (!error) kp.disabled = true;
       osvjezi();
     };
