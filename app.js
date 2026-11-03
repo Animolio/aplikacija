@@ -28,6 +28,14 @@
     if (n && onNatrag) n.addEventListener('click', onNatrag);
     const f = app.querySelector('input'); if (f) f.focus({ preventScroll: true });
   }
+  const ZUPCANIK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  // Zaglavlje za Agenta, Partnera i urednicu: znacka, ruzicasta traka i postavke (nacin prikaza)
+  function zaglavlje(znacka) {
+    return `<div class="klub-zaglavlje boja" aria-hidden="true"></div><div class="vrh"><span class="znacka">${znacka}</span><button class="ikona" type="button" data-postavke aria-label="Postavke">${ZUPCANIK}</button></div>`;
+  }
+  function vezPostavke(natrag) {
+    const b = app.querySelector('[data-postavke]'); if (b && window.AnimolioTema) b.addEventListener('click', () => window.AnimolioTema.postavke(A, natrag));
+  }
   function zauzeto(gumb, da) { if (!gumb) return; gumb.disabled = da; app.classList.toggle('ucitavanje', da); }
   function greska(tekst) { const p = app.querySelector('.poruka'); if (p) p.textContent = tekst; }
 
@@ -211,9 +219,8 @@
     const T = window.AnimolioTema; if (T) T.uloga('klub');
     const foto = T && T.foto(); const izg = T ? T.izgled() : 'animolio';
     const zag = foto ? 'foto' : (['sven', 'marcy', 'fluffy'].includes(izg) ? 'motiv' : 'boja');
-    const zupcanik = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
     prikazi(`<div class="klub-zaglavlje ${zag}"${foto ? ` style="--foto:url(${foto})"` : ''} aria-hidden="true"></div>
-      <div class="vrh"><span class="znacka">ANIMOLIO KLUB</span><button class="ikona" id="postavke" aria-label="Postavke">${zupcanik}</button></div>
+      <div class="vrh"><span class="znacka">ANIMOLIO KLUB</span><button class="ikona" id="postavke" aria-label="Postavke">${ZUPCANIK}</button></div>
       ${zag !== 'boja' ? `<div class="klub-prostor ${zag}"></div>` : ''}
       ${lj ? `<div class="kartica ljubimac"><span class="avatar"${foto ? ` style="background-image:url(${foto})"` : ''}>${foto ? '' : esc(lj.ime[0].toUpperCase())}</span><div class="ljubimac-tekst"><div class="ime">${esc(lj.ime)}</div><span class="sitno">${lj.vrsta === 'pas' ? 'Pas' : 'Mačka'}</span></div><button class="veza mala" type="button" id="uredi">Uredi</button></div>` : `<button class="gumb drugi" id="dodaj">Dodajte svog ljubimca</button>`}
       ${popustHtml()}
@@ -320,7 +327,7 @@
     }
   }
 
-  const A = { sb, S, app, prikazi, vrh, esc, greska, zauzeto, zaslonUlaz, zaslonPocetna, odjava };
+  const A = { sb, S, app, prikazi, vrh, esc, greska, zauzeto, zaslonUlaz, zaslonPocetna, odjava, zaglavlje, vezPostavke };
 
   /* ---------- Pokretanje ---------- */
   (async function start() {
