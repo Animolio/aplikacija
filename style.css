@@ -165,3 +165,6 @@ details.blog[open] summary::after { content: "Zatvori \25B4"; }
 .znak-st.uspavan { color: #8A5A0B; background: #F7EDD9; }
 .obavijest { background: var(--naglasak-blago); color: var(--tekst); border-radius: var(--r-vel); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.45; }
 .obavijest-red { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.traka-bodova { height: 10px; border-radius: 99px; background: var(--kartica2); overflow: hidden; }
+.traka-bodova span { display: block; height: 100%; background: var(--tekst); border-radius: 99px; }
+input[type="file"] { font: inherit; font-size: 15px; color: var(--tekst); padding: 10px 0; }
