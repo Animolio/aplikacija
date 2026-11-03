@@ -50,7 +50,7 @@
       const red = { naziv, oib, adresa: adr }; if (agent) red.agent_id = agent.id;
       const { data, error } = await A.sb.from('partneri').insert(red).select('*').single();
       A.zauzeto(b, false);
-      if (error) return A.greska(error.code === '23505' ? 'Prijava s ovim OIB-om već postoji.' : 'Prijava nije poslana. Pokušajte ponovno.');
+      if (error) return A.greska(error.code === '23505' ? 'Prijava s ovim OIB-om već postoji. Prijavite se adresom e-pošte s kojom ste se prvi put prijavili ili pišite na animolio@mozon.hr.' : 'Prijava nije poslana. Pokušajte ponovno.');
       PT.p = data; zast('animolio_agent_kod', null); poslano();
     });
   }
