@@ -175,13 +175,13 @@
 
   /* ---------- Početna ---------- */
   const SERUMI = {
-    SVEN: { opis: 'Za suhe i ispucane šape i njuškicu. Jedini s lavandom.' },
+    SVEN: { opis: 'Za suhe i ispucane šape i njuškicu. Jedini s lavandom.', uporaba: 'Prije boravka vani serum lagano umasirati na prethodno očišćene i osušene jastučiće šapica i na kožu između prstiju.' },
     MARCY: { opis: 'Za šape i njuškicu. Bez eteričnih ulja, najblaži od tri.' },
     FLUFFY: { opis: 'Za suhu kožu sklonu svrbežu i dlaku bez sjaja.', upozorenje: 'Sadrži eterično ulje čajevca. Nije za mačke.' }
   };
   function serumHtml(naziv) {
     const s = SERUMI[naziv]; const c = S.cijene[naziv];
-    return `<div class="serum"><span class="slovo" aria-hidden="true">${naziv[0]}</span><div class="opis"><b>${naziv}${c ? ' · ' + esc(c) : ''}</b><span class="sitno">${s.opis}</span>${s.upozorenje ? `<span class="upozorenje">${s.upozorenje}</span>` : ''}<button class="gumb mali naglaseni" data-kupi="${naziv}">Kupi na animolio.eu</button></div></div>`;
+    return `<div class="serum"><span class="slovo" aria-hidden="true">${naziv[0]}</span><div class="opis"><b>${naziv}${c ? ' · ' + esc(c) : ''}</b><span class="sitno">${s.opis}</span>${s.upozorenje ? `<span class="upozorenje">${s.upozorenje}</span>` : ''}${s.uporaba ? `<span class="uporaba"><b>Način uporabe:</b> ${s.uporaba}</span>` : ''}<button class="gumb mali naglaseni" data-kupi="${naziv}">Kupi na animolio.eu</button></div></div>`;
   }
   function preporuka() {
     const lj = S.ljubimci[0];
