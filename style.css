@@ -1,0 +1,47 @@
+:root {
+  --pozadina: #FDFCF8;
+  --tekst: #3A2A21;
+  --blago: #6E5C50;
+  --rub: #E6DED4;
+  --kartica: #FFFFFF;
+  --naglasak: #8B6B3D;
+  --greska: #9B2C2C;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--pozadina); color: var(--tekst); }
+body { font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+#app { max-width: 480px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; padding: max(20px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom)); gap: 22px; }
+.vrh { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.marka { font-weight: 700; letter-spacing: .28em; font-size: 12px; }
+.natrag { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--rub); background: var(--kartica); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; color: var(--tekst); }
+.prazno { width: 44px; }
+h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 600; font-size: 30px; line-height: 1.12; }
+h1.veliki { font-size: 36px; }
+p { margin: 0; font-size: 16px; line-height: 1.5; }
+.sitno { font-size: 14px; color: var(--blago); }
+.sredina { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 20px; }
+label.polje { display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 600; color: var(--blago); }
+input[type=text], input[type=email] { height: 54px; border-radius: 14px; border: 1.5px solid #CDBFB0; background: var(--kartica); padding: 0 16px; font: inherit; font-size: 17px; color: var(--tekst); width: 100%; }
+input:focus { outline: 2px solid var(--tekst); outline-offset: 1px; border-color: var(--tekst); }
+input.kod { font-size: 24px; letter-spacing: .35em; }
+.gumb { height: 54px; border-radius: 14px; border: 0; background: var(--tekst); color: var(--pozadina); font: inherit; font-weight: 700; font-size: 16px; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.gumb[disabled] { background: var(--rub); color: #857265; cursor: default; }
+.gumb.drugi { background: var(--kartica); color: var(--tekst); border: 1px solid var(--rub); }
+.dno { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+.veza { background: none; border: 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--blago); min-height: 44px; cursor: pointer; text-decoration: underline; }
+.poruka { font-size: 14px; color: var(--greska); }
+.okvir { display: flex; gap: 12px; align-items: center; border: 1px solid var(--rub); border-radius: 14px; background: var(--kartica); padding: 14px 16px; font-size: 15px; line-height: 1.4; }
+.izbor { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.izbor button { height: 56px; border-radius: 14px; border: 1px solid var(--rub); background: var(--kartica); font: inherit; font-weight: 600; font-size: 16px; color: var(--tekst); cursor: pointer; }
+.izbor button[aria-pressed=true] { border: 2px solid var(--tekst); }
+.kartica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.oznaka { font-size: 11px; font-weight: 700; letter-spacing: .09em; color: var(--blago); }
+.ljubimac { display: flex; align-items: center; gap: 14px; }
+.ljubimac .ime { font-family: Georgia, serif; font-weight: 600; font-size: 24px; }
+.serum { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid #F0E9E0; }
+.serum:first-of-type { border-top: 0; padding-top: 0; }
+.serum b { font-size: 16px; }
+.upozorenje { font-size: 13px; font-weight: 600; color: var(--greska); }
+.gumb.mali { height: 46px; font-size: 15px; }
+.centar { text-align: center; }
+.ucitavanje { opacity: .6; pointer-events: none; }
