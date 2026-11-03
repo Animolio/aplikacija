@@ -67,7 +67,7 @@
         <label class="polje">Ime i prezime<input type="text" id="ime" autocomplete="name" maxlength="80" value="${A.esc(a.ime_prezime || '')}"></label>
         <label class="polje">OIB<input type="text" id="oib" inputmode="numeric" maxlength="11" value="${A.esc(a.oib || '')}"></label>
         <label class="polje">E-pošta<input type="email" value="${A.esc(A.S.korisnik.email)}" disabled></label>
-        <label class="polje">IBAN za isplatu provizije<input type="text" id="iban" autocapitalize="characters" placeholder="HR… ili LT… (Revolut)" value="${A.esc(a.iban || '')}"></label>
+        <label class="polje">IBAN za isplatu provizije<input type="text" id="iban" autocapitalize="characters" value="${A.esc(a.iban || '')}"></label>
         <p class="sitno">Ako prijava ne bude odobrena, podatke brišemo.</p>
         <p class="poruka" role="alert"></p>
         <div class="dno"><button class="gumb" type="submit">Dalje</button><button class="veza" type="button" id="odustani">Odustani</button></div>
