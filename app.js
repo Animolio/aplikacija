@@ -143,30 +143,33 @@
     });
   }
 
-  function zaslonLjubimac() {
-    let vrsta = '';
-    prikazi(`${vrh(false)}
-      <h1>Vaš ljubimac</h1>
+  function zaslonLjubimac(postojeci) {
+    let vrsta = postojeci ? postojeci.vrsta : '';
+    const tipka = (v, n) => `<button type="button" data-v="${v}" aria-pressed="${vrsta === v}">${n}</button>`;
+    prikazi(`${vrh(!!postojeci)}
+      <h1>${postojeci ? 'Uredi ljubimca' : 'Vaš ljubimac'}</h1>
       <form id="f" style="display:flex;flex-direction:column;gap:16px;flex:1">
-        <label class="polje">Ime<input type="text" id="ime" maxlength="40" autocomplete="off"></label>
-        <div class="izbor" role="group" aria-label="Vrsta"><button type="button" data-v="pas" aria-pressed="false">Pas</button><button type="button" data-v="macka" aria-pressed="false">Mačka</button></div>
+        <label class="polje">Ime<input type="text" id="ime" maxlength="40" autocomplete="off" value="${postojeci ? esc(postojeci.ime) : ''}"></label>
+        <div class="izbor" role="group" aria-label="Vrsta">${tipka('pas', 'Pas')}${tipka('macka', 'Mačka')}</div>
         <p class="sitno">Preporuke vrijede za pse i mačke.</p>
         <p class="poruka" role="alert"></p>
-        <div class="dno"><button class="gumb" type="submit">Spremi</button><button class="veza" type="button" id="preskoci">Preskoči</button></div>
-      </form>`);
+        <div class="dno"><button class="gumb" type="submit">Spremi</button>${postojeci ? '' : '<button class="veza" type="button" id="preskoci">Preskoči</button>'}</div>
+      </form>`, zaslonPocetna);
     app.querySelectorAll('[data-v]').forEach((x) => x.addEventListener('click', () => {
       vrsta = x.dataset.v; app.querySelectorAll('[data-v]').forEach((y) => y.setAttribute('aria-pressed', String(y === x)));
     }));
-    app.querySelector('#preskoci').addEventListener('click', zaslonPocetna);
+    const pr = app.querySelector('#preskoci'); if (pr) pr.addEventListener('click', zaslonPocetna);
     app.querySelector('#f').addEventListener('submit', async (e) => {
       e.preventDefault();
       const b = e.submitter; const ime = app.querySelector('#ime').value.trim();
       if (!ime || !vrsta) return greska('Upišite ime i odaberite psa ili mačku.');
       zauzeto(b, true);
-      const { data, error } = await sb.from('ljubimci').insert({ ime, vrsta }).select('id, ime, vrsta').single();
+      const upit = postojeci ? sb.from('ljubimci').update({ ime, vrsta }).eq('id', postojeci.id) : sb.from('ljubimci').insert({ ime, vrsta });
+      const { data, error } = await upit.select('id, ime, vrsta').single();
       zauzeto(b, false);
       if (error) return greska('Nije spremljeno. Pokušajte ponovno.');
-      S.ljubimci.push(data); zaslonPocetna();
+      if (postojeci) S.ljubimci[0] = data; else S.ljubimci.push(data);
+      zaslonPocetna();
     });
   }
 
@@ -188,24 +191,89 @@
     }
     return `<div class="kartica"><span class="oznaka">PREPORUKA · ${esc(lj.ime.toUpperCase())}</span>${serumHtml('SVEN')}${serumHtml('FLUFFY')}</div>`;
   }
+  function popustHtml() {
+    const kod = S.profil && S.profil.kod_popusta; if (!kod) return '';
+    return `<div class="kartica popust"><span class="oznaka">ČLANSKI POPUST</span>
+      <div class="popust-red"><span class="postotak">10 %</span><span class="sitno">u webshopu animolio.eu</span></div>
+      <p class="sitno">Kad kupujete iz aplikacije, popust je već uključen. Kupujete li izravno na webu, upišite kod na blagajni.</p>
+      <div class="kod-red"><span class="kod-tekst">${esc(kod)}</span><button class="gumb drugi mali" type="button" id="kopiraj">Kopiraj kod</button></div></div>`;
+  }
+  async function savjetHtml() {
+    try {
+      const { data } = await sb.from('savjeti').select('tekst').order('od', { ascending: false }).limit(1);
+      if (!data || !data.length) return '';
+      return `<div class="kartica savjet"><span class="oznaka">SAVJET TJEDNA</span><p>${esc(data[0].tekst)}</p></div>`;
+    } catch (e) { return ''; }
+  }
   async function zaslonPocetna() {
     const lj = S.ljubimci[0];
     const T = window.AnimolioTema; if (T) T.uloga('klub');
     const foto = T && T.foto(); const izg = T ? T.izgled() : 'animolio';
-    const zag = foto ? 'foto' : (['sven', 'marcy', 'fluffy'].includes(izg) ? 'motiv' : '');
+    const zag = foto ? 'foto' : (['sven', 'marcy', 'fluffy'].includes(izg) ? 'motiv' : 'boja');
     const zupcanik = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
-    prikazi(`${zag ? `<div class="klub-zaglavlje ${zag}"${foto ? ` style="--foto:url(${foto})"` : ''} aria-hidden="true"></div>` : ''}
+    prikazi(`<div class="klub-zaglavlje ${zag}"${foto ? ` style="--foto:url(${foto})"` : ''} aria-hidden="true"></div>
       <div class="vrh"><span class="znacka">ANIMOLIO KLUB</span><button class="ikona" id="postavke" aria-label="Postavke">${zupcanik}</button></div>
-      ${zag ? `<div class="klub-prostor ${zag}"></div>` : ''}
-      ${lj ? `<div class="kartica ljubimac"><span class="avatar"${foto ? ` style="background-image:url(${foto})"` : ''}>${foto ? '' : esc(lj.ime[0].toUpperCase())}</span><div><div class="ime">${esc(lj.ime)}</div><span class="sitno">${lj.vrsta === 'pas' ? 'Pas' : 'Mačka'}</span></div></div>` : `<button class="gumb drugi" id="dodaj">Dodajte svog ljubimca</button>`}
+      ${zag !== 'boja' ? `<div class="klub-prostor ${zag}"></div>` : ''}
+      ${lj ? `<div class="kartica ljubimac"><span class="avatar"${foto ? ` style="background-image:url(${foto})"` : ''}>${foto ? '' : esc(lj.ime[0].toUpperCase())}</span><div class="ljubimac-tekst"><div class="ime">${esc(lj.ime)}</div><span class="sitno">${lj.vrsta === 'pas' ? 'Pas' : 'Mačka'}</span></div><button class="veza mala" type="button" id="uredi">Uredi</button></div>` : `<button class="gumb drugi" id="dodaj">Dodajte svog ljubimca</button>`}
+      ${popustHtml()}
       <div id="prep">${preporuka()}</div>
-      <p class="poruka" role="alert"></p>
-      <div class="dno"><button class="veza" id="odjava">Odjava</button></div>`);
-    const d = app.querySelector('#dodaj'); if (d) d.addEventListener('click', zaslonLjubimac);
+      <div id="savjet"></div>
+      <div class="kartica begi"><span class="oznaka">PITAJTE BEGIJA</span><p class="sitno">Begi je AI pomoćnik Animolija. Pomaže odabrati serum i odgovara o njezi. Za bolest ili ozljedu pitajte veterinara.</p><button class="gumb naglaseni mali" type="button" id="begi">Razgovor s Begijem</button></div>
+      <p class="poruka" role="alert"></p>`);
+    const d = app.querySelector('#dodaj'); if (d) d.addEventListener('click', () => zaslonLjubimac());
+    const u = app.querySelector('#uredi'); if (u) u.addEventListener('click', () => zaslonLjubimac(lj));
     app.querySelector('#postavke').addEventListener('click', () => { if (T) T.postavke(A, zaslonPocetna); });
-    app.querySelector('#odjava').addEventListener('click', async () => { await sb.auth.signOut(); S.korisnik = null; S.profil = null; S.ljubimci = []; zaslonUlaz(); });
-    app.querySelector('#prep').addEventListener('click', (e) => { const k = e.target.closest('[data-kupi]'); if (k) kupi(k.dataset.kupi, k); });
-    if (!Object.keys(S.cijene).length) { await ucitajCijene(); app.querySelector('#prep').innerHTML = preporuka(); }
+    app.querySelector('#begi').addEventListener('click', zaslonBegi);
+    const k = app.querySelector('#kopiraj');
+    if (k) k.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(S.profil.kod_popusta); k.textContent = 'Kopirano'; }
+      catch (e) { k.textContent = 'Označite kod i kopirajte'; }
+    });
+    app.querySelector('#prep').addEventListener('click', (e) => { const x = e.target.closest('[data-kupi]'); if (x) kupi(x.dataset.kupi, x); });
+    savjetHtml().then((h) => { const s = app.querySelector('#savjet'); if (s) s.innerHTML = h; });
+    if (!Object.keys(S.cijene).length) { await ucitajCijene(); const p = app.querySelector('#prep'); if (p) p.innerHTML = preporuka(); }
+  }
+  async function odjava() { await sb.auth.signOut(); S.korisnik = null; S.profil = null; S.ljubimci = []; S.begi = []; zaslonUlaz(); }
+
+  /* ---------- Begi ---------- */
+  const BEGI = 'https://animolio.app.n8n.cloud/webhook/begi-chat';
+  function begiFormat(t) {
+    let h = esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    h = h.replace(/\[([^\]]+)\]\((https:\/\/(?:www\.)?animolio\.eu[^\s)]*)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    h = h.replace(/(^|[\s(])((?:https:\/\/)?(?:www\.)?animolio\.eu(?:\/[^\s<)]*)?)/g, (m, a, u) => `${a}<a href="${u.startsWith('http') ? u : 'https://' + u}" target="_blank" rel="noopener">${u}</a>`);
+    return h.replace(/\n/g, '<br>');
+  }
+  function zaslonBegi() {
+    S.begi = S.begi || [];
+    const lj = S.ljubimci[0];
+    const poruke = () => S.begi.map((m) => `<div class="poruka-${m.role === 'user' ? 'ja' : 'begi'}">${m.role === 'user' ? esc(m.content) : begiFormat(m.content)}</div>`).join('');
+    prikazi(`${vrh(true)}
+      <h1>Begi</h1>
+      <div class="razgovor" id="raz" aria-live="polite">${S.begi.length ? poruke() : `<div class="poruka-begi">Vau! Ja sam Begi${lj ? `. Što trebate za ${esc(lj.ime)}?` : '. Kako mogu pomoći?'}</div>`}</div>
+      <p class="poruka" role="alert"></p>
+      <form id="f" class="begi-unos"><input type="text" id="pitanje" maxlength="500" autocomplete="off" aria-label="Vaše pitanje"><button class="gumb naglaseni" type="submit" aria-label="Pošalji">Pošalji</button></form>
+      <p class="sitno centar">Begi je AI pomoćnik. Razgovori se spremaju.</p>`, zaslonPocetna);
+    const raz = app.querySelector('#raz'); raz.scrollTop = raz.scrollHeight;
+    app.querySelector('#f').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const ul = app.querySelector('#pitanje'), b = e.submitter, t = ul.value.trim();
+      if (!t) return;
+      const povijest = S.begi.slice(-12);
+      S.begi.push({ role: 'user', content: t }); ul.value = '';
+      raz.innerHTML = poruke() + '<div class="poruka-begi tipka">…</div>'; raz.scrollTop = raz.scrollHeight;
+      zauzeto(b, true); greska('');
+      try {
+        const r = await fetch(BEGI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: t, history: povijest }) });
+        const odg = (await r.text()).trim();
+        if (!r.ok || !odg) throw new Error('prazno');
+        S.begi.push({ role: 'assistant', content: odg });
+      } catch (er) {
+        S.begi.pop(); ul.value = t;
+        greska('Begi se trenutno ne javlja. Pokušajte ponovno ili pišite na animolio@mozon.hr.');
+      }
+      zauzeto(b, false);
+      raz.innerHTML = poruke(); raz.scrollTop = raz.scrollHeight;
+    });
   }
 
   /* ---------- Wix: cijene i blagajna s kodom ---------- */
@@ -249,7 +317,7 @@
     }
   }
 
-  const A = { sb, S, app, prikazi, vrh, esc, greska, zauzeto, zaslonUlaz, zaslonPocetna };
+  const A = { sb, S, app, prikazi, vrh, esc, greska, zauzeto, zaslonUlaz, zaslonPocetna, odjava };
 
   /* ---------- Pokretanje ---------- */
   (async function start() {
