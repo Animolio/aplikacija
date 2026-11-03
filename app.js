@@ -87,6 +87,7 @@
   async function nakonPrijave() {
     const tema = (u) => { if (window.AnimolioTema) window.AnimolioTema.uloga(u); };
     if (window.AnimolioMozon && await window.AnimolioMozon.preuzmi(A)) return tema('mozon');
+    if (window.AnimolioUrednica && await window.AnimolioUrednica.preuzmi(A)) return tema('mozon');
     if (window.AnimolioPartner && await window.AnimolioPartner.preuzmi(A)) return tema('partner');
     if (window.AnimolioAgent && await window.AnimolioAgent.preuzmi(A)) return tema('agent');
     tema('klub');
