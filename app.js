@@ -33,14 +33,15 @@
 
   /* ---------- Prijava ---------- */
   function zaslonUlaz() {
+    let partner = false; try { partner = !!localStorage.getItem('animolio_agent_kod'); } catch (e) {}
     prikazi(`${vrh(false)}
       <form class="sredina" id="f">
-        <h1 class="veliki">Animolio Klub</h1>
-        <p>Profil ljubimca, preporuka seruma i savjeti za njegu.</p>
+        <h1 class="veliki">${partner ? 'Prijava partnera' : 'Animolio Klub'}</h1>
+        <p>${partner ? 'Upišite e-poštu. Na nju stiže kod za prijavu.' : 'Profil ljubimca, preporuka seruma i savjeti za njegu.'}</p>
         <label class="polje">E-pošta<input type="email" id="mail" autocomplete="email" inputmode="email" required value="${esc(S.email)}"></label>
         <p class="poruka" role="alert"></p>
         <button class="gumb" type="submit">Pošalji kod za prijavu</button>
-        ${window.AnimolioAgent ? window.AnimolioAgent.vezaUlaz() : ''}
+        ${window.AnimolioAgent && !partner ? window.AnimolioAgent.vezaUlaz() : ''}
       </form>`);
     app.querySelector('#f').addEventListener('submit', async (e) => {
       e.preventDefault();
