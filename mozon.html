@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animolio · MOZON</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="ikona-192.png">
+<link rel="stylesheet" href="style.css">
+<style>
+body { min-height: 100vh; }
+.okvirM { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.bocno { border-right: 1px solid var(--rub); padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; background: #FBF8F2; }
+.bocno .marka { margin: 0 8px 20px; display: block; }
+.bocno button { text-align: left; background: none; border: 0; font: inherit; font-size: 15px; color: var(--tekst); padding: 10px 12px; border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; }
+.bocno button[aria-current="page"] { background: var(--kartica); border: 1px solid var(--rub); font-weight: 700; }
+.bocno .broj { font-size: 12px; font-weight: 700; background: var(--tekst); color: var(--pozadina); border-radius: 999px; padding: 1px 8px; }
+.bocno .dolje { margin-top: auto; }
+.glavno { padding: 28px 32px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.glavno h1 { font-size: 28px; }
+table { width: 100%; border-collapse: collapse; background: var(--kartica); border: 1px solid var(--rub); border-radius: 14px; overflow: hidden; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #F0E9E0; vertical-align: top; }
+th { font-size: 12px; letter-spacing: .06em; color: var(--blago); background: #FBF8F2; font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
+td:last-child { white-space: nowrap; }
+td.br, th.br { text-align: right; font-variant-numeric: tabular-nums; }
+.mali { height: 34px; border-radius: 10px; padding: 0 12px; font: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--rub); background: var(--kartica); color: var(--tekst); cursor: pointer; white-space: nowrap; }
+.mali.glavni { background: var(--tekst); color: var(--pozadina); border-color: var(--tekst); }
+.oznakaS { display: inline-block; white-space: nowrap; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #F1EAE1; }
+.oznakaS.ceka { background: var(--tekst); color: var(--pozadina); }
+.plocice { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.plocica { background: var(--kartica); border: 1px solid var(--rub); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.plocica b { font-family: Georgia, serif; font-size: 32px; font-weight: 600; }
+.potpisImg { max-width: 260px; max-height: 90px; border: 1px solid var(--rub); border-radius: 8px; background: #fff; display: block; }
+.prijavaM { max-width: 420px; margin: 12vh auto; padding: 0 24px; display: flex; flex-direction: column; gap: 18px; }
+@media (max-width: 760px) { .okvirM { grid-template-columns: 1fr; } .bocno { border-right: 0; border-bottom: 1px solid var(--rub); flex-direction: row; flex-wrap: wrap; } .bocno .marka { width: 100%; margin-bottom: 8px; } .glavno { padding: 20px 16px; } table { display: block; overflow-x: auto; } }
+</style>
+</head>
+<body>
+<div id="m"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js" integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok" crossorigin="anonymous"></script>
+<script src="config.js"></script>
+<script src="mozon-racunalo.js"></script>
+</body>
+</html>
