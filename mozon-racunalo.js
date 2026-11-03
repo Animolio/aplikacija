@@ -109,12 +109,47 @@
     });
   }
 
+  const adresaApp = () => location.origin + location.pathname.replace(/[^/]*$/, '');
+  const qrSvg = (tekst) => { const q = window.qrcode(0, 'M'); q.addData(tekst); q.make(); return q.createSvgTag({ cellSize: 6, margin: 4, scalable: true }); };
+  function prikaziQr(el, kod) {
+    const link = adresaApp() + '?kod=' + encodeURIComponent(kod); const svg = qrSvg(link);
+    el.innerHTML = `<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin:12px 0"><div style="width:150px;background:#fff;padding:8px;border:1px solid #E8DFD3;border-radius:12px">${svg}</div>
+      <div style="display:flex;flex-direction:column;gap:8px"><span>Kod <b>${esc(kod)}</b></span><span class="sitno">${esc(link)}</span><a class="mali" id="preuzmiQr" download="QR-${esc(kod)}.svg" href="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}">Preuzmi QR za tisak (SVG)</a></div></div>`;
+  }
+  let prikaziKlub = false;
   async function kodovi(g) {
     const d = await rpc('mozon_kodovi');
-    const VR = { partner: 'Partner', privatni: 'Privatni', test: 'Test', donacija: 'Donacija', animolio: 'Animolio' };
-    g.innerHTML = naslov('Kodovi za popust', 'Narudžbe se broje od 2.11.2026. Kod bivšeg partnera prelazi pod Animolio: prodaje do prijenosa pripadaju partneru i agentu, prodaje poslije prijenosa Animoliju. „Wix auto” znači da je kupon u Wixu stvorio n8n.') + `<table><thead><tr><th>Kod</th><th>Vrsta</th><th>Naziv / partner</th><th>Agent</th><th>Wix auto</th><th class="br">Narudžbi</th><th class="br">Iznos</th><th class="br">Nakon prijenosa: narudžbi</th><th class="br">Nakon prijenosa: iznos</th><th class="br">Popust</th><th>Zadnja</th></tr></thead><tbody>
-      ${d.map((k) => `<tr><td><b>${esc(k.kod)}</b>${k.aktivan ? '' : '<br><span class="sitno">neaktivan</span>'}</td><td>${VR[k.vrsta] || esc(k.vrsta)}${k.preneseno ? `<br><span class="sitno">od ${datum(k.preneseno)}</span>` : ''}</td><td>${esc(k.partner || k.naziv)}</td><td>${k.agent ? esc(k.agent) : ''}</td><td>${k.u_wixu ? 'Da' : ''}</td>
-        <td class="br">${k.narudzbi_partner}</td><td class="br">${eur(k.iznos_partner)}</td><td class="br">${k.preneseno ? k.narudzbi_animolio : ''}</td><td class="br">${k.preneseno ? eur(k.iznos_animolio) : ''}</td><td class="br">${eur(k.popust_eur)}</td><td>${datum(k.zadnja)}</td></tr>`).join('')}</tbody></table>`;
+    const VR = { partner: 'Partner', privatni: 'Privatni', test: 'Test', donacija: 'Donacija', animolio: 'Animolio', kampanja: 'Kampanja', klub: 'Član Kluba' };
+    const glavni = d.filter((k) => k.vrsta !== 'klub'); const klub = d.filter((k) => k.vrsta === 'klub');
+    const zbroj = (a, f) => a.reduce((s, k) => s + Number(k[f] || 0), 0);
+    const red = (k) => `<tr data-kod="${esc(k.kod)}"><td><b>${esc(k.kod)}</b>${k.aktivan ? '' : '<br><span class="sitno">ugašen</span>'}</td><td>${VR[k.vrsta] || esc(k.vrsta)}${k.preneseno ? `<br><span class="sitno">od ${datum(k.preneseno)}</span>` : ''}</td><td>${esc(k.partner || k.naziv)}</td><td>${k.agent ? esc(k.agent) : ''}</td><td>${k.u_wixu ? 'Da' : ''}</td>
+        <td class="br">${k.narudzbi_partner}</td><td class="br">${eur(k.iznos_partner)}</td><td class="br">${k.preneseno ? k.narudzbi_animolio : ''}</td><td class="br">${k.preneseno ? eur(k.iznos_animolio) : ''}</td><td class="br">${eur(k.popust_eur)}</td><td>${datum(k.zadnja)}</td>
+        <td>${k.vrsta === 'kampanja' ? '<button class="mali" data-a="qr">QR</button> ' : ''}${['kampanja', 'klub', 'animolio'].includes(k.vrsta) ? (k.aktivan ? '<button class="mali" data-a="ugasi">Ugasi</button>' : '<button class="mali" data-a="ukljuci">Uključi</button>') : ''}</td></tr>`;
+    const zaglavlje = '<table><thead><tr><th>Kod</th><th>Vrsta</th><th>Naziv / partner</th><th>Agent</th><th>Wix auto</th><th class="br">Narudžbi</th><th class="br">Iznos</th><th class="br">Nakon prijenosa: narudžbi</th><th class="br">Nakon prijenosa: iznos</th><th class="br">Popust</th><th>Zadnja</th><th></th></tr></thead><tbody>';
+    g.innerHTML = naslov('Kodovi za popust', 'Narudžbe se broje od 2.11.2026. Kod bivšeg partnera prelazi pod Animolio: prodaje do prijenosa pripadaju partneru i agentu, prodaje poslije prijenosa Animoliju. „Wix auto” znači da je kupon u Wixu stvorio n8n. Ugašenom kodu n8n briše kupon u Wixu.')
+      + `<form id="kamp" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin:8px 0 4px"><label class="polje" style="min-width:260px">Novi kod za kampanju (naziv kampanje)<input type="text" id="kampNaziv" maxlength="60"></label><button class="mali glavni" type="submit">Napravi kod</button></form><div id="kampRez"></div>`
+      + zaglavlje + glavni.map(red).join('') + '</tbody></table>'
+      + `<h2 style="margin-top:28px">Osobni kodovi članova Kluba</h2><p class="sitno">${klub.length} kodova (aktivnih ${klub.filter((k) => k.aktivan).length}) · narudžbi ${zbroj(klub, 'narudzbi_partner')} · iznos ${eur(zbroj(klub, 'iznos_partner'))} · popust ${eur(zbroj(klub, 'popust_eur'))}</p>`
+      + (klub.length ? `<button class="mali" id="klubTog">${prikaziKlub ? 'Sakrij popis' : 'Prikaži popis'}</button>` + (prikaziKlub ? zaglavlje + klub.map(red).join('') + '</tbody></table>' : '') : '')
+      + '<p class="poruka" role="alert"></p>';
+    const por = g.querySelector('.poruka');
+    const kt = g.querySelector('#klubTog'); if (kt) kt.addEventListener('click', () => { prikaziKlub = !prikaziKlub; prikazi(); });
+    g.querySelector('#kamp').addEventListener('submit', async (e) => {
+      e.preventDefault(); const b = e.submitter; const naziv = g.querySelector('#kampNaziv').value.trim();
+      if (naziv.length < 2) { por.textContent = 'Upišite naziv kampanje.'; return; }
+      b.disabled = true;
+      try { const kod = await rpc('mozon_nova_kampanja', { naziv }); por.textContent = ''; prikaziQr(g.querySelector('#kampRez'), kod); g.querySelector('#kampRez').insertAdjacentHTML('beforeend', '<p class="sitno">Kupon u Wixu nastaje za desetak sekundi. Kod se pojavljuje u tablici kad osvježite sekciju.</p>'); g.querySelector('#kampNaziv').value = ''; }
+      catch (er) { por.style.color = ''; por.textContent = 'Kod nije napravljen. Pokušajte ponovno.'; }
+      b.disabled = false;
+    });
+    g.querySelectorAll('tbody').forEach((tb) => tb.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-a]'); if (!b) return; const kod = b.closest('tr').dataset.kod;
+      if (b.dataset.a === 'qr') { prikaziQr(g.querySelector('#kampRez'), kod); g.querySelector('#kampRez').scrollIntoView({ behavior: 'smooth' }); return; }
+      if (b.dataset.a === 'ugasi' && b.textContent !== 'Potvrdi gašenje') { b.textContent = 'Potvrdi gašenje'; return; }
+      b.disabled = true;
+      try { await rpc('mozon_kod_aktivan', { k: kod, da: b.dataset.a === 'ukljuci' }); prikazi(); }
+      catch (er) { b.disabled = false; por.textContent = 'Radnja nije uspjela.'; }
+    }));
   }
 
   async function prodaje(g) {
