@@ -87,7 +87,7 @@
         ? await A.sb.from('agenti').update({ ime_prezime: ime, oib, iban }).eq('id', A.S.korisnik.id).select('*').single()
         : await A.sb.from('agenti').insert({ ime_prezime: ime, oib, iban }).select('*').single();
       A.zauzeto(b, false);
-      if (r.error) return A.greska(r.error.code === '23505' ? 'Prijava s ovim OIB-om već postoji.' : 'Podaci nisu spremljeni. Pokušajte ponovno.');
+      if (r.error) return A.greska(r.error.code === '23505' ? 'Prijava s ovim OIB-om već postoji. Prijavite se adresom e-pošte s kojom ste se prvi put prijavili ili pišite na animolio@mozon.hr.' : 'Podaci nisu spremljeni. Pokušajte ponovno.');
       AG.a = r.data; zaslonUgovor();
     });
   }
