@@ -103,6 +103,13 @@ input[type=checkbox] { accent-color: var(--naglasak); }
 .begi-unos .gumb { width: auto; padding: 0 18px; flex: none; }
 .begi-kupi { margin-top: 8px; }
 
+/* Agent i Partner */
+.klub-zaglavlje ~ :not(.kartica):not(.vrh) { position: relative; z-index: 1; }
+.kod-kartica { align-items: flex-start; }
+.kod-veliki { font-family: var(--naslov); font-weight: 600; font-size: 48px; line-height: 1; letter-spacing: .02em; }
+.kod-srednji { font-family: var(--naslov); font-weight: 600; font-size: 28px; line-height: 1; }
+.qr-okvir { background: #FFFFFF; padding: 6px; border-radius: 10px; flex: none; }
+
 /* Urednica savjeta */
 textarea { border-radius: var(--r); border: 1.5px solid var(--rub); background: var(--kartica); padding: 12px 14px; font: inherit; font-size: 16px; line-height: 1.5; color: var(--tekst); width: 100%; resize: vertical; }
 textarea:focus { outline: 2px solid var(--naglasak); outline-offset: 1px; border-color: var(--naglasak); }
