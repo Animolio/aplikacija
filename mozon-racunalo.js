@@ -8,7 +8,7 @@
   const datum = (d) => d ? new Date(d).toLocaleString('hr-HR', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
   const eur = (x) => Number(x || 0).toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   const STANJE = { prijava: 'Nije potpisao', potpisano: 'Čeka odobrenje', odobren: 'Odobren', odbijen: 'Odbijen', raskinut: 'Raskinut' };
-  const SEKCIJE = [['prijave', 'Prijave agenata'], ['agenti', 'Agenti'], ['partneri', 'Partneri'], ['kodovi', 'Kodovi za popust'], ['prodaje', 'Prodaje po kodu'], ['klub', 'Klub']];
+  const SEKCIJE = [['prijave', 'Prijave agenata'], ['agenti', 'Agenti'], ['partneri', 'Partneri'], ['kodovi', 'Kodovi za popust'], ['prodaje', 'Prodaje po kodu'], ['provizija', 'Provizija i isplate'], ['klub', 'Klub']];
   let email = ''; let aktivna = 'prijave'; let cekaBroj = 0;
 
   /* ---------- Prijava ---------- */
@@ -45,7 +45,7 @@
     m.querySelector('nav').addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (b) { aktivna = b.dataset.s; prikazi(); } });
     m.querySelector('#odjava').addEventListener('click', async () => { await sb.auth.signOut(); prijava(); });
   }
-  async function prikazi() { okvir(); const g = m.querySelector('#g'); g.innerHTML = '<p class="sitno">Učitavam…</p>'; try { await ({ prijave, agenti, partneri, kodovi, prodaje, klub })[aktivna](g); } catch (e) { g.innerHTML = '<p class="poruka">Podaci se nisu učitali. Osvježite stranicu.</p>'; } }
+  async function prikazi() { okvir(); const g = m.querySelector('#g'); g.innerHTML = '<p class="sitno">Učitavam…</p>'; try { await ({ prijave, agenti, partneri, kodovi, prodaje, provizija, klub })[aktivna](g); } catch (e) { g.innerHTML = '<p class="poruka">Podaci se nisu učitali. Osvježite stranicu.</p>'; } }
   const rpc = async (ime, arg) => { const { data, error } = await sb.rpc(ime, arg); if (error) throw error; return data; };
   const naslov = (t, opis) => `<h1>${t}</h1>${opis ? `<p class="sitno">${opis}</p>` : ''}`;
 
@@ -163,6 +163,67 @@
     const [k] = await rpc('mozon_klub');
     const pl = (n, t) => `<div class="plocica"><span class="oznaka">${t}</span><b>${n}</b></div>`;
     g.innerHTML = naslov('Klub', 'Samo brojke, bez osobnih podataka članova.') + `<div class="plocice">${pl(k.clanova, 'ČLANOVA')}${pl(k.s_kodom, 'S KODOM PARTNERA')}${pl(k.ljubimaca, 'LJUBIMACA')}${pl(k.pasa, 'PASA')}${pl(k.macaka, 'MAČAKA')}</div>`;
+  }
+
+  /* ---------- Provizija i isplate (3.11.2026.) ---------- */
+  const dan = (d) => d ? new Date(d + 'T12:00:00').toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric', year: 'numeric' }) : '';
+  async function provizija(g) {
+    const [{ data: s, error: es }, d, isp] = await Promise.all([
+      sb.from('agent_postavke').select('provizija_posto, dana_cekanja, dan_isplate').eq('id', 1).maybeSingle(),
+      rpc('mozon_provizija'), rpc('mozon_isplate')]);
+    if (es) throw es;
+    const v = (x) => x === null || x === undefined ? '' : esc(x);
+    g.innerHTML = naslov('Provizija i isplate', 'Agent vidi samo svoju proviziju i broj bočica. Iznos prodaje agentu se ne prikazuje.') + `
+      <section class="plocica" style="gap:12px;max-width:640px">
+        <span class="oznaka">UVJETI IZ UGOVORA</span>
+        <form id="uvjeti" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end">
+          <label class="polje">Provizija (%)<input type="number" id="posto" min="0" max="100" step="0.01" inputmode="decimal" value="${v(s && s.provizija_posto)}"></label>
+          <label class="polje">Rok čekanja (dana)<input type="number" id="cek" min="0" max="120" step="1" inputmode="numeric" value="${v(s && s.dana_cekanja)}"></label>
+          <label class="polje">Dan isplate u mjesecu<input type="number" id="dan" min="1" max="28" step="1" inputmode="numeric" value="${v(s && s.dan_isplate)}"></label>
+          <button class="mali glavni" type="submit" style="grid-column:1/-1;justify-self:start">Spremi uvjete</button>
+        </form>
+        <p class="sitno">Rok čekanja: koliko dana nakon kupnje provizija ostaje „u čekanju” prije nego što ide u obračun. Prazan rok znači da provizija odmah ide u obračun.</p>
+        <p class="poruka" id="porU" role="alert"></p>
+      </section>
+      <h2>Stanje po agentu</h2>
+      ${d.length ? `<table><thead><tr><th>Agent</th><th>Kod</th><th class="br">U čekanju</th><th class="br">Za obračun</th><th class="br">Obračunato, neisplaćeno</th><th class="br">Isplaćeno</th><th>Zadnji obračun do</th><th></th></tr></thead><tbody>
+        ${d.map((a) => `<tr data-id="${a.id}"><td><b>${esc(a.ime_prezime)}</b></td><td>${esc(a.kod)}</td><td class="br">${eur(a.u_cekanju)}</td><td class="br"><b>${eur(a.za_obracun)}</b></td><td class="br">${eur(a.obracunato_neisplaceno)}</td><td class="br">${eur(a.isplaceno)}</td><td>${dan(a.zadnji_obracun_do)}</td>
+          <td>${Number(a.za_obracun) > 0 ? '<button class="mali" data-a="obracun">Napravi obračun</button>' : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="sitno">Još nema odobrenih agenata.</p>'}
+      <h2>Obračuni</h2>
+      ${isp.length ? `<table><thead><tr><th>Agent</th><th>Razdoblje</th><th class="br">Iznos</th><th>Isplaćeno</th><th></th></tr></thead><tbody>
+        ${isp.map((i) => `<tr data-isp="${i.id}"><td><b>${esc(i.ime_prezime)}</b> · ${esc(i.kod)}</td><td>${dan(i.obracun_od)} – ${dan(i.obracun_do)}</td><td class="br"><b>${eur(i.iznos_eur)}</b></td>
+          <td>${i.isplaceno ? dan(i.isplaceno) : '<span class="oznakaS ceka">Čeka isplatu</span>'}</td>
+          <td>${i.isplaceno ? '' : '<button class="mali glavni" data-a="isplati">Označi isplaćenim</button> <button class="mali" data-a="ponisti">Poništi obračun</button>'}</td></tr>`).join('')}</tbody></table>` : '<p class="sitno">Još nema obračuna.</p>'}
+      <p class="poruka" id="porP" role="alert"></p>`;
+    const porU = g.querySelector('#porU'); const porP = g.querySelector('#porP');
+    g.querySelector('#uvjeti').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const br = (id) => { const x = g.querySelector(id).value.trim().replace(',', '.'); return x === '' ? null : Number(x); };
+      const promjena = { provizija_posto: br('#posto'), dana_cekanja: br('#cek'), dan_isplate: br('#dan') };
+      if (promjena.provizija_posto !== null && !(promjena.provizija_posto >= 0 && promjena.provizija_posto <= 100)) return (porU.textContent = 'Provizija mora biti između 0 i 100.');
+      if (promjena.dana_cekanja !== null && !(Number.isInteger(promjena.dana_cekanja) && promjena.dana_cekanja >= 0 && promjena.dana_cekanja <= 120)) return (porU.textContent = 'Rok čekanja mora biti cijeli broj od 0 do 120.');
+      if (promjena.dan_isplate !== null && !(Number.isInteger(promjena.dan_isplate) && promjena.dan_isplate >= 1 && promjena.dan_isplate <= 28)) return (porU.textContent = 'Dan isplate mora biti od 1 do 28.');
+      const b = e.submitter; b.disabled = true;
+      const { error } = await sb.from('agent_postavke').update(Object.assign(promjena, { izmijenjeno: new Date().toISOString() })).eq('id', 1);
+      b.disabled = false;
+      if (error) { porU.style.color = ''; porU.textContent = 'Uvjeti nisu spremljeni.'; return; }
+      prikazi();
+    });
+    g.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', async () => {
+      const a = b.dataset.a;
+      if ((a === 'isplati' || a === 'ponisti' || a === 'obracun') && !b.dataset.potvrda) {
+        b.dataset.potvrda = '1'; b.textContent = a === 'isplati' ? 'Potvrdi: isplaćeno danas' : a === 'ponisti' ? 'Potvrdi poništenje' : 'Potvrdi obračun'; return;
+      }
+      b.disabled = true;
+      try {
+        if (a === 'obracun') await rpc('mozon_obracunaj', { agent: b.closest('tr').dataset.id });
+        else await rpc(a === 'isplati' ? 'mozon_isplati' : 'mozon_ponisti_obracun', { isplata: Number(b.closest('tr').dataset.isp) });
+        prikazi();
+      } catch (er) {
+        b.disabled = false;
+        porP.textContent = /postotak/.test(er.message || '') ? 'Najprije upišite postotak provizije.' : /nema iznosa/.test(er.message || '') ? 'Nema iznosa za obračun.' : 'Radnja nije uspjela.';
+      }
+    }));
   }
 
   /* ---------- Pokretanje ---------- */
