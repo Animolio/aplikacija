@@ -237,7 +237,7 @@
     const inic = String(a.ime_prezime || '').split(' ').filter(Boolean).slice(0, 2).map((s) => s[0].toUpperCase()).join('');
     const proba = !d.postavke.akademija_postoji;
     return `<div class="agent-glava"><span class="inicijali">${A.esc(inic)}</span><div class="stavka-tekst"><b>${pozdrav}, ${A.esc(ime)}</b><span class="sitno">Kod ${A.esc(a.kod)}${proba ? ' · proba: Akademija označena ručno' : ''}</span>${d.razina ? `<span class="sitno">Razina ${A.esc(d.razina.naziv)} · ${eur(d.razina.po_bocici)} € po bočici</span>` : ''}</div></div>
-      ${obavijestiHtml(A, d)}
+      <div id="novo"></div>
       ${d.greska ? '<div class="okvir">Podaci o partnerima i prodajama trenutno se ne mogu učitati.</div>' : zaradaKartica(d)}
       <div class="red-oznaka"><span class="oznaka">PLAN ZA DANAS</span>${ruta ? `<a class="veza mala" href="${ruta}" target="_blank" rel="noopener">Otvori rutu</a>` : ''}</div>
       ${plan.length ? planLista(A, plan.slice(0, 3), false) : prazanPlan()}`;
@@ -248,6 +248,7 @@
     A.prikazi(`${A.zaglavlje('ANIMOLIO AGENT')}<div class="teren">${sadrzaj(A, a, d)}<p class="poruka" role="alert"></p></div>${izbornik(T.kartica)}`);
     A.app.classList.add('s-izbornikom');
     A.vezPostavke(() => prikazi(A, a, natrag));
+    if (window.AnimolioNovo) window.AnimolioNovo.u(A, 'agent', A.app.querySelector('#novo'), () => prikazi(A, a, natrag));
     A.app.querySelectorAll('[data-kartica]').forEach((b) => b.addEventListener('click', () => { T.kartica = b.dataset.kartica; prikazi(A, a, natrag); window.scrollTo(0, 0); }));
     const pr = A.app.querySelector('#posaljiRacun'); if (pr) pr.addEventListener('click', () => zaslonDatoteka(A, a, 'racun', () => prikazi(A, a, natrag)));
     const io = A.app.querySelector('#imamObrt'); if (io) io.addEventListener('click', () => zaslonDatoteka(A, a, 'obrt', () => prikazi(A, a, natrag)));
