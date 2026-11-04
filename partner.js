@@ -78,6 +78,7 @@
   function pocetna() {
     const A = PT.A; const p = PT.p; const link = adresa() + '?kod=' + encodeURIComponent(p.kod);
     A.prikazi(`${A.zaglavlje('ANIMOLIO PARTNER')}<h1>${A.esc(p.naziv)}</h1>
+      <div id="novo"></div>
       <div class="kartica" style="flex-direction:row;align-items:center;gap:16px"><div class="qr-okvir">${qrSvg(link, 120)}</div>
         <div style="display:flex;flex-direction:column;gap:6px"><span class="oznaka">KOD ZA KUPCE</span><span class="kod-srednji">${A.esc(p.kod)}</span></div></div>
       <button class="gumb drugi" id="dijeli">Podijeli poveznicu za kupce</button>
@@ -88,6 +89,7 @@
       <p class="poruka" role="alert"></p><div class="dno"><button class="veza" id="odjava">Odjava</button></div>`);
     A.app.querySelector('#odjava').addEventListener('click', odjava);
     A.vezPostavke(pocetna);
+    if (window.AnimolioNovo) window.AnimolioNovo.u(A, 'partner', A.app.querySelector('#novo'), pocetna);
     A.app.querySelector('#dijeli').addEventListener('click', async () => {
       try { if (navigator.share) await navigator.share({ title: 'Animolio Klub', url: link }); else { await navigator.clipboard.writeText(link); dobro(A, 'Poveznica je kopirana.'); } } catch (e) {}
     });
