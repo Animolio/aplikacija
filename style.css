@@ -168,3 +168,17 @@ details.blog[open] summary::after { content: "Zatvori \25B4"; }
 .traka-bodova { height: 10px; border-radius: 99px; background: var(--kartica2); overflow: hidden; }
 .traka-bodova span { display: block; height: 100%; background: var(--tekst); border-radius: 99px; }
 input[type="file"] { font: inherit; font-size: 15px; color: var(--tekst); padding: 10px 0; }
+
+/* Novo: obavijesti, ankete, blog (4.11.2026.) */
+.novo { display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
+.obavijest.blaga { background: var(--kartica); border: 1px solid var(--rub); }
+.anketa .opcije { display: flex; flex-direction: column; gap: 8px; }
+.opcija { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 1px solid var(--rub); border-radius: var(--r); background: var(--pozadina); font-size: 15px; cursor: pointer; }
+.opcija input { width: 20px; height: 20px; accent-color: var(--tekst); flex: none; }
+.opcija:has(input:checked) { border-color: var(--tekst); font-weight: 600; }
+.clanak { display: flex; flex-direction: column; gap: 12px; font-size: 16px; line-height: 1.6; }
+.clanak h1 { font-size: 28px; line-height: 1.2; }
+.clanak h2 { margin-top: 8px; }
+.clanak .uvod { font-style: italic; color: var(--blago); }
+.clanak ul, .clanak ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+.clanak p { margin: 0; }
