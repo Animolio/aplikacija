@@ -8,7 +8,7 @@
   const datum = (d) => d ? new Date(d).toLocaleString('hr-HR', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
   const eur = (x) => Number(x || 0).toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   const STANJE = { prijava: 'Nije potpisao', potpisano: 'Čeka odobrenje', odobren: 'Odobren', odbijen: 'Odbijen', raskinut: 'Raskinut' };
-  const SEKCIJE = [['prijave', 'Prijave agenata'], ['agenti', 'Agenti'], ['partneri', 'Partneri'], ['kodovi', 'Kodovi za popust'], ['prodaje', 'Prodaje po kodu'], ['provizija', 'Provizija i razine'], ['zahtjevi', 'Zahtjevi za isplatu'], ['veleprodaja', 'Veleprodaja'], ['klub', 'Klub']];
+  const SEKCIJE = [['prijave', 'Prijave agenata'], ['agenti', 'Agenti'], ['partneri', 'Partneri'], ['kodovi', 'Kodovi za popust'], ['prodaje', 'Prodaje po kodu'], ['provizija', 'Provizija i razine'], ['zahtjevi', 'Zahtjevi za isplatu'], ['veleprodaja', 'Veleprodaja'], ['obavijesti', 'Obavijesti i ankete'], ['klub', 'Klub']];
   let email = ''; let aktivna = 'prijave'; let cekaBroj = 0;
 
   /* ---------- Prijava ---------- */
@@ -45,7 +45,7 @@
     m.querySelector('nav').addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (b) { aktivna = b.dataset.s; prikazi(); } });
     m.querySelector('#odjava').addEventListener('click', async () => { await sb.auth.signOut(); prijava(); });
   }
-  async function prikazi() { okvir(); const g = m.querySelector('#g'); g.innerHTML = '<p class="sitno">Učitavam…</p>'; try { await ({ prijave, agenti, partneri, kodovi, prodaje, provizija, zahtjevi, veleprodaja, klub })[aktivna](g); } catch (e) { g.innerHTML = '<p class="poruka">Podaci se nisu učitali. Osvježite stranicu.</p>'; } }
+  async function prikazi() { okvir(); const g = m.querySelector('#g'); g.innerHTML = '<p class="sitno">Učitavam…</p>'; try { await ({ prijave, agenti, partneri, kodovi, prodaje, provizija, zahtjevi, veleprodaja, obavijesti, klub })[aktivna](g); } catch (e) { g.innerHTML = '<p class="poruka">Podaci se nisu učitali. Osvježite stranicu.</p>'; } }
   const rpc = async (ime, arg) => { const { data, error } = await sb.rpc(ime, arg); if (error) throw error; return data; };
   const naslov = (t, opis) => `<h1>${t}</h1>${opis ? `<p class="sitno">${opis}</p>` : ''}`;
 
@@ -327,6 +327,97 @@
       b.disabled = true;
       try { await rpc('mozon_veleprodaja_brisi', { stavka: Number(b.closest('tr').dataset.id) }); prikazi(); }
       catch (er) { b.disabled = false; por.textContent = 'Brisanje nije uspjelo.'; }
+    }));
+  }
+
+  /* ---------- Obavijesti i ankete (4.11.2026.) — jednosmjerno, bez poruka natrag ---------- */
+  const KOMU = [['klub', 'Klub'], ['partner', 'Partneri'], ['agent', 'Agenti']];
+  const komuIme = (z) => (Array.isArray(z) ? z : [z]).map((x) => (KOMU.find((k) => k[0] === x) || [x, x])[1]).join(', ');
+  async function obavijesti(g) {
+    const [ob, an] = await Promise.all([rpc('mozon_obavijesti'), rpc('mozon_ankete')]);
+    const danas = new Date(); const iso = `${danas.getFullYear()}-${String(danas.getMonth() + 1).padStart(2, '0')}-${String(danas.getDate()).padStart(2, '0')}`;
+    const kvacice = (pre) => KOMU.map(([k, n]) => `<label class="kvacica"><input type="checkbox" name="${pre}" value="${k}"> ${n}</label>`).join('');
+    g.innerHTML = naslov('Obavijesti i ankete', 'Jednosmjerno: korisnici vide obavijest u aplikaciji, a na anketu odgovaraju samo ponuđenim odgovorima. Rezultati ankete prikazuju se samo zbirno. Odobreni blog članci sami se pojavljuju kao obavijest na dan objave.') + `
+      <section class="plocica" style="gap:12px;max-width:860px">
+        <span class="oznaka">NOVA OBAVIJEST</span>
+        <form id="of" style="display:flex;flex-direction:column;gap:12px">
+          <div class="red-kvacica"><span class="sitno">Komu:</span>${kvacice('ok')}</div>
+          <label class="polje">Naslov<input type="text" id="on" maxlength="80"></label>
+          <label class="polje">Tekst<textarea id="ot" rows="4" maxlength="600"></textarea></label>
+          <label class="polje">Poveznica (nije obavezno, mora počinjati s https://)<input type="url" id="op" maxlength="300"></label>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+            <label class="polje">Vidljivo od<input type="date" id="ood" value="${iso}"></label>
+            <label class="polje">Vidljivo do (nije obavezno)<input type="date" id="odo"></label>
+          </div>
+          <label class="kvacica"><input type="checkbox" id="okl"> Ključna obavijest: partner i agent moraju potvrditi da su je pročitali (Klubu ide kao obična)</label>
+          <button class="mali glavni" type="submit" style="align-self:flex-start">Objavi obavijest</button>
+        </form>
+        <p class="poruka" id="porO" role="alert"></p>
+      </section>
+      <section class="plocica" style="gap:12px;max-width:860px">
+        <span class="oznaka">NOVA ANKETA</span>
+        <form id="af" style="display:flex;flex-direction:column;gap:12px">
+          <div class="red-kvacica"><span class="sitno">Komu:</span>${kvacice('ak')}</div>
+          <label class="polje">Pitanje<input type="text" id="ap" maxlength="300"></label>
+          <label class="polje">Ponuđeni odgovori, svaki u svom retku (2 do 8)<textarea id="ao" rows="5"></textarea></label>
+          <label class="kvacica"><input type="checkbox" id="av"> Može se odabrati više odgovora</label>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+            <label class="polje">Otvorena od<input type="date" id="aod" value="${iso}"></label>
+            <label class="polje">Otvorena do (nije obavezno)<input type="date" id="ado"></label>
+          </div>
+          <button class="mali glavni" type="submit" style="align-self:flex-start">Objavi anketu</button>
+        </form>
+        <p class="poruka" id="porA" role="alert"></p>
+      </section>
+      <h2>Ankete</h2>
+      ${an.length ? an.map((a) => { const uk = Number(a.odgovora) || 0; return `<section class="plocica" data-anketa="${a.id}" style="gap:8px;max-width:860px">
+        <div class="red-oznaka"><span class="oznaka">${esc(komuIme(a.za))} · OD ${dan(a.od)}${a.vrijedi_do ? ' DO ' + dan(a.vrijedi_do) : ''}</span><span class="oznakaS${a.aktivna ? ' ceka' : ''}">${a.aktivna ? 'Otvorena' : 'Zatvorena'}</span></div>
+        <b style="font-family:inherit;font-size:16px">${esc(a.pitanje)}</b><span class="sitno">Odgovora: ${uk}</span>
+        ${(a.opcije || []).map((o, i) => { const c = Number((a.po_opciji || [])[i] || 0); const pct = uk ? Math.round(c / uk * 100) : 0; return `<div class="rez"><span>${esc(o)}</span><span class="rez-traka"><span style="width:${pct}%"></span></span><span class="br">${c} (${pct} %)</span></div>`; }).join('')}
+        ${a.aktivna ? '<button class="mali" data-a="zatvori-anketu" style="align-self:flex-start">Zatvori anketu</button>' : ''}
+      </section>`; }).join('') : '<p class="sitno">Još nema anketa.</p>'}
+      <h2>Obavijesti</h2>
+      ${ob.length ? `<table><thead><tr><th>Od</th><th>Komu</th><th>Naslov</th><th class="br">Potvrdilo / zatvorilo</th><th>Stanje</th><th></th></tr></thead><tbody>
+        ${ob.map((o) => `<tr data-ob="${o.id}"><td>${dan(o.od)}</td><td>${esc(komuIme(o.za))}</td><td><b>${esc(o.naslov)}</b>${o.kljucna ? ' <span class="oznakaS">ključna</span>' : ''}<br><span class="sitno">${esc(o.tekst)}</span></td>
+          <td class="br">${o.potvrdilo}</td><td>${o.aktivna ? 'Vidljiva' + (o.vrijedi_do ? ' do ' + dan(o.vrijedi_do) : '') : 'Završena'}</td>
+          <td>${o.aktivna ? '<button class="mali" data-a="zavrsi-obavijest">Završi</button>' : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="sitno">Još nema obavijesti.</p>'}
+      <p class="poruka" id="porL" role="alert"></p>`;
+    const odabrano = (pre) => [...g.querySelectorAll(`input[name="${pre}"]:checked`)].map((x) => x.value);
+    g.querySelector('#of').addEventListener('submit', async (e) => {
+      e.preventDefault(); const por = g.querySelector('#porO');
+      const komu = odabrano('ok'); const na = g.querySelector('#on').value.trim(); const te = g.querySelector('#ot').value.trim(); const po = g.querySelector('#op').value.trim();
+      if (!komu.length) return (por.textContent = 'Odaberite komu ide obavijest.');
+      if (na.length < 3) return (por.textContent = 'Upišite naslov.');
+      if (te.length < 10) return (por.textContent = 'Upišite tekst obavijesti.');
+      if (po && !/^https:\/\//.test(po)) return (por.textContent = 'Poveznica mora počinjati s https://');
+      const b = e.submitter;
+      if (!b.dataset.potvrda) { b.dataset.potvrda = '1'; b.textContent = `Potvrdi objavu: ${komuIme(komu)}`; return; }
+      b.disabled = true;
+      try { await rpc('mozon_obavijest_dodaj', { komu, naslov_: na, tekst_: te, poveznica_: po || null, kljucna_: g.querySelector('#okl').checked, od_: g.querySelector('#ood').value || null, do_: g.querySelector('#odo').value || null }); prikazi(); }
+      catch (er) { b.disabled = false; por.textContent = 'Obavijest nije objavljena.'; }
+    });
+    g.querySelector('#af').addEventListener('submit', async (e) => {
+      e.preventDefault(); const por = g.querySelector('#porA');
+      const komu = odabrano('ak'); const pi = g.querySelector('#ap').value.trim();
+      const opc = g.querySelector('#ao').value.split('\n').map((x) => x.trim()).filter(Boolean);
+      if (!komu.length) return (por.textContent = 'Odaberite komu ide anketa.');
+      if (pi.length < 5) return (por.textContent = 'Upišite pitanje.');
+      if (opc.length < 2 || opc.length > 8) return (por.textContent = 'Upišite od 2 do 8 odgovora, svaki u svom retku.');
+      if (opc.some((x) => x.length > 120)) return (por.textContent = 'Odgovor može imati najviše 120 znakova.');
+      const b = e.submitter;
+      if (!b.dataset.potvrda) { b.dataset.potvrda = '1'; b.textContent = `Potvrdi anketu: ${komuIme(komu)}`; return; }
+      b.disabled = true;
+      try { await rpc('mozon_anketa_dodaj', { komu, pitanje_: pi, opcije_: opc, vise_: g.querySelector('#av').checked, od_: g.querySelector('#aod').value || null, do_: g.querySelector('#ado').value || null }); prikazi(); }
+      catch (er) { b.disabled = false; por.textContent = 'Anketa nije objavljena.'; }
+    });
+    g.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', async () => {
+      if (!b.dataset.potvrda) { b.dataset.potvrda = '1'; b.textContent = 'Potvrdi'; return; }
+      b.disabled = true;
+      try {
+        if (b.dataset.a === 'zatvori-anketu') await rpc('mozon_anketa_zavrsi', { anketa: Number(b.closest('[data-anketa]').dataset.anketa) });
+        else await rpc('mozon_obavijest_zavrsi', { obavijest: Number(b.closest('tr').dataset.ob) });
+        prikazi();
+      } catch (er) { b.disabled = false; g.querySelector('#porL').textContent = 'Radnja nije uspjela.'; }
     }));
   }
 
