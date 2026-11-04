@@ -224,6 +224,7 @@
       <div class="vrh"><span class="znacka">ANIMOLIO KLUB</span><button class="ikona" id="postavke" aria-label="Postavke">${ZUPCANIK}</button></div>
       ${zag !== 'boja' ? `<div class="klub-prostor ${zag}"></div>` : ''}
       ${lj ? `<div class="kartica ljubimac"><span class="avatar"${foto ? ` style="background-image:url(${foto})"` : ''}>${foto ? '' : esc(lj.ime[0].toUpperCase())}</span><div class="ljubimac-tekst"><div class="ime">${esc(lj.ime)}</div><span class="sitno">${lj.vrsta === 'pas' ? 'Pas' : 'Mačka'}</span></div><button class="veza mala" type="button" id="uredi">Uredi</button></div>` : `<button class="gumb drugi" id="dodaj">Dodajte svog ljubimca</button>`}
+      <div id="novo"></div>
       ${popustHtml()}
       <div id="prep">${preporuka()}</div>
       <div id="savjet"></div>
@@ -240,6 +241,7 @@
     });
     app.querySelector('#prep').addEventListener('click', (e) => { const x = e.target.closest('[data-kupi]'); if (x) kupi(x.dataset.kupi, x); });
     savjetHtml().then((h) => { const s = app.querySelector('#savjet'); if (s) s.innerHTML = h; });
+    if (window.AnimolioNovo) window.AnimolioNovo.u(A, 'klub', app.querySelector('#novo'), zaslonPocetna);
     if (!Object.keys(S.cijene).length) { await ucitajCijene(); const p = app.querySelector('#prep'); if (p) p.innerHTML = preporuka(); }
   }
   async function odjava() { await sb.auth.signOut(); S.korisnik = null; S.profil = null; S.ljubimci = []; S.begi = []; zaslonUlaz(); }
