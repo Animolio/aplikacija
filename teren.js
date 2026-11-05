@@ -206,7 +206,8 @@ ${isplataHtml(d)}`;
         ${d.partneri.length ? `<div class="kartica lista">${d.partneri.map((p) => { const st = stanjePartnera(p); return `<div class="stavka">
           <div class="stavka-tekst"><b>${A.esc(p.naziv)}</b><span class="sitno">${p.stanje === 'odobren'
             ? `${bocice(Number(p.bocica_30))} u 30 dana · ${razlog(p).toLowerCase()}`
-            : p.stanje === 'prijava' ? 'Prijava čeka odobrenje MOZON-a' : 'Suradnja završena'}</span>${p.kod ? `<span class="sitno">Kod ${A.esc(p.kod)}</span>` : ''}</div>
+            : p.stanje === 'prijava' ? 'Prijava čeka odobrenje MOZON-a' : 'Suradnja završena'}</span>${p.kod ? `<span class="sitno">Kod ${A.esc(p.kod)}</span>` : ''}
+            ${p.stanje !== 'raskinut' ? `<button class="veza mala" type="button" data-uzorci="${p.id}" style="align-self:flex-start">Uzorci</button>` : ''}</div>
           ${znak(st)}</div>`; }).join('')}</div>` : '<div class="okvir">Još nemate partnera. Kod dogovora s partnerom pokažite mu QR kod pod „Novi partner“.</div>'}`;
     }
     if (T.kartica === 'plan') {
@@ -261,12 +262,52 @@ ${isplataHtml(d)}`;
       if (error) return A.greska('Potvrda nije spremljena. Pokušajte ponovno.');
       prikazi(A, a, natrag);
     }));
+    A.app.querySelectorAll('[data-uzorci]').forEach((b) => b.addEventListener('click', () => {
+      const p = T.d.partneri.find((x) => x.id === b.dataset.uzorci); if (p) zaslonUzorci(A, p, () => prikazi(A, a, natrag));
+    }));
     A.app.querySelectorAll('[data-posjet]').forEach((b) => b.addEventListener('click', async () => {
       A.zauzeto(b, true);
       const { error } = await A.sb.from('posjeti').insert({ partner_id: b.dataset.posjet });
       A.zauzeto(b, false);
       if (error) return A.greska('Posjet nije zabilježen. Pokušajte ponovno.');
       prikazi(A, a, natrag);
+    }));
+  }
+
+  // Primopredaja uzoraka partneru: agent upisuje, partner potvrđuje u svojoj aplikaciji
+  async function zaslonUzorci(A, p, natrag) {
+    A.app.classList.remove('s-izbornikom');
+    const { data } = await A.sb.rpc('agent_uzorci');
+    const lista = (data || []).filter((u) => u.partner_id === p.id);
+    const st = (u) => [['SVEN', u.sven], ['MARCY', u.marcy], ['FLUFFY', u.fluffy], ['TRILOGY', u.trilogy]].filter((x) => x[1] > 0).map((x) => `${x[0]} ${x[1]}`).join(' · ');
+    const dd = (d) => { const x = new Date(d); return `${x.getDate()}. ${x.getMonth() + 1}. ${x.getFullYear()}.`; };
+    const polje = (id, naziv, v) => `<label class="polje">${naziv}<input type="number" id="${id}" min="0" max="50" step="1" inputmode="numeric" value="${v}"></label>`;
+    A.prikazi(`${A.vrh(true).replace('>ANIMOLIO<', '>ANIMOLIO AGENT<')}<h1>Uzorci</h1><p class="sitno">${A.esc(p.naziv)}</p>
+      <form id="fu" class="kartica" style="gap:12px"><span class="oznaka">PREDANO DANAS</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${polje('us', 'SVEN', 1)}${polje('um', 'MARCY', 1)}${polje('uf', 'FLUFFY', 1)}${polje('ut', 'TRILOGY', 0)}</div>
+        <button class="gumb" type="submit">Spremi predaju</button></form>
+      ${lista.length ? `<span class="oznaka">PREDAJE</span><div class="kartica lista">${lista.map((u) => `<div class="stavka"><div class="stavka-tekst"><b>${st(u)}</b><span class="sitno">${dd(u.predano)} · ${u.potvrdeno ? 'partner potvrdio ' + dd(u.potvrdeno) : 'čeka potvrdu partnera'}</span></div>
+        ${u.potvrdeno ? '' : `<button class="veza mala" type="button" data-obrisi="${u.id}">Obriši</button>`}</div>`).join('')}</div>` : ''}
+      <p class="poruka" role="alert"></p>`, natrag);
+    const n = (id) => { const v = Number(A.app.querySelector('#' + id).value); return Number.isInteger(v) && v >= 0 && v <= 50 ? v : null; };
+    A.app.querySelector('#fu').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = ['us', 'um', 'uf', 'ut'].map(n);
+      if (v.some((x) => x === null)) return A.greska('Upišite broj od 0 do 50.');
+      if (v.every((x) => x === 0)) return A.greska('Upišite barem jedan uzorak.');
+      const b = e.submitter; A.zauzeto(b, true);
+      const { error } = await A.sb.rpc('agent_predaj_uzorke', { partner: p.id, sven_: v[0], marcy_: v[1], fluffy_: v[2], trilogy_: v[3] });
+      A.zauzeto(b, false);
+      if (error) return A.greska('Predaja nije spremljena. Pokušajte ponovno.');
+      zaslonUzorci(A, p, natrag);
+    });
+    A.app.querySelectorAll('[data-obrisi]').forEach((b) => b.addEventListener('click', async () => {
+      if (!b.dataset.potvrda) { b.dataset.potvrda = '1'; b.textContent = 'Potvrdi brisanje'; return; }
+      A.zauzeto(b, true);
+      const { error } = await A.sb.rpc('agent_obrisi_uzorke', { stavka: Number(b.dataset.obrisi) });
+      A.zauzeto(b, false);
+      if (error) return A.greska('Nije obrisano.');
+      zaslonUzorci(A, p, natrag);
     }));
   }
 
