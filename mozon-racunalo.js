@@ -8,7 +8,7 @@
   const datum = (d) => d ? new Date(d).toLocaleString('hr-HR', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
   const eur = (x) => Number(x || 0).toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   const STANJE = { prijava: 'Nije potpisao', potpisano: 'Čeka odobrenje', odobren: 'Odobren', odbijen: 'Odbijen', raskinut: 'Raskinut' };
-  const SEKCIJE = [['prijave', 'Prijave agenata'], ['agenti', 'Agenti'], ['partneri', 'Partneri'], ['kodovi', 'Kodovi za popust'], ['prodaje', 'Prodaje po kodu'], ['provizija', 'Provizija i razine'], ['zahtjevi', 'Zahtjevi za isplatu'], ['veleprodaja', 'Veleprodaja'], ['obavijesti', 'Obavijesti i ankete'], ['klub', 'Klub']];
+  const SEKCIJE = [['prijave', 'Prijave agenata'], ['agenti', 'Agenti'], ['partneri', 'Partneri'], ['kodovi', 'Kodovi za popust'], ['prodaje', 'Prodaje po kodu'], ['provizija', 'Provizija i razine'], ['zahtjevi', 'Zahtjevi za isplatu'], ['ppartneri', 'Provizija partnera'], ['veleprodaja', 'Veleprodaja'], ['obavijesti', 'Obavijesti i ankete'], ['klub', 'Klub']];
   let email = ''; let aktivna = 'prijave'; let cekaBroj = 0;
 
   /* ---------- Prijava ---------- */
@@ -45,7 +45,7 @@
     m.querySelector('nav').addEventListener('click', (e) => { const b = e.target.closest('[data-s]'); if (b) { aktivna = b.dataset.s; prikazi(); } });
     m.querySelector('#odjava').addEventListener('click', async () => { await sb.auth.signOut(); prijava(); });
   }
-  async function prikazi() { okvir(); const g = m.querySelector('#g'); g.innerHTML = '<p class="sitno">Učitavam…</p>'; try { await ({ prijave, agenti, partneri, kodovi, prodaje, provizija, zahtjevi, veleprodaja, obavijesti, klub })[aktivna](g); } catch (e) { g.innerHTML = '<p class="poruka">Podaci se nisu učitali. Osvježite stranicu.</p>'; } }
+  async function prikazi() { okvir(); const g = m.querySelector('#g'); g.innerHTML = '<p class="sitno">Učitavam…</p>'; try { await ({ prijave, agenti, partneri, kodovi, prodaje, provizija, zahtjevi, ppartneri, veleprodaja, obavijesti, klub })[aktivna](g); } catch (e) { g.innerHTML = '<p class="poruka">Podaci se nisu učitali. Osvježite stranicu.</p>'; } }
   const rpc = async (ime, arg) => { const { data, error } = await sb.rpc(ime, arg); if (error) throw error; return data; };
   const naslov = (t, opis) => `<h1>${t}</h1>${opis ? `<p class="sitno">${opis}</p>` : ''}`;
 
@@ -175,7 +175,7 @@
     if (w) w.location = data.signedUrl; else location.href = data.signedUrl;
   };
   async function provizija(g) {
-    const POLJA = 'dana_cekanja, dan_obracuna, dan_isplate, najmanja_isplata, dana_izmedu_racuna, veleprodaja_po_bocici, bod_bocica, bod_veleprodaja, bod_novi_partner, bod_aktivni_partner, razdoblje_mjeseci';
+    const POLJA = 'dana_cekanja, dan_obracuna, dan_isplate, najmanja_isplata, dana_izmedu_racuna, veleprodaja_po_bocici, bod_bocica, bod_veleprodaja, bod_novi_partner, bod_aktivni_partner, razdoblje_mjeseci, doprinosi_iz_posto, porez_posto, zdravstveno_na_posto';
     const [{ data: s, error: es }, { data: raz, error: er }, d, isp] = await Promise.all([
       sb.from('agent_postavke').select(POLJA).eq('id', 1).maybeSingle(),
       sb.from('razine').select('redni, naziv, po_bocici, po_trilogy, prag_ulaz, prag_odrzavanje').order('redni'),
@@ -189,7 +189,7 @@
     g.innerHTML = naslov('Provizija i razine', 'Provizija je fiksan iznos po bočici, prema razini na dan prodaje. Razine određuju bodovi, provjera je 1. u mjesecu. Agent vidi samo svoju proviziju, bočice i bodove.') + `
       <section class="plocica" style="gap:12px;max-width:860px">
         <span class="oznaka">RAZINE I IZNOSI</span>
-        <table><thead><tr><th>Razina</th><th class="br">Po bočici (€)</th><th class="br">TRILOGY po paketu (€)</th><th class="br">Bodova za ulaz</th><th class="br">Bodova za održavanje</th></tr></thead><tbody>
+        <table><thead><tr><th>Razina</th><th class="br">Po bočici, bruto (€)</th><th class="br">TRILOGY po paketu, bruto (€)</th><th class="br">Bodova za ulaz</th><th class="br">Bodova za održavanje</th></tr></thead><tbody>
           ${(raz || []).map((r) => `<tr><td><span style="font-weight:700">${imeRazine(r.redni)}</span></td><td class="br">${pol(r, 'po_bocici', '0.01')}</td><td class="br">${pol(r, 'po_trilogy', '0.01')}</td>
             <td class="br">${r.redni >= 3 ? pol(r, 'prag_ulaz', '1') : (r.redni === 2 ? '<span class="sitno">obrt</span>' : '')}</td><td class="br">${r.redni >= 3 ? pol(r, 'prag_odrzavanje', '1') : ''}</td></tr>`).join('')}
         </tbody></table>
@@ -202,6 +202,7 @@
           ${p('b1', 'Bodova po bočici (kod)', 'bod_bocica', '0.1')}${p('b2', 'Bodova po bočici (veleprodaja)', 'bod_veleprodaja', '0.1')}${p('b3', 'Bodova za novog partnera', 'bod_novi_partner', '1')}${p('b4', 'Bodova mjesečno po aktivnom partneru', 'bod_aktivni_partner', '1')}
           ${p('b5', 'Razdoblje bodova (mjeseci)', 'razdoblje_mjeseci', '1')}${p('v1', 'Veleprodaja po bočici (€)', 'veleprodaja_po_bocici', '0.01')}${p('c1', 'Rok čekanja (dana)', 'dana_cekanja', '1')}${p('c2', 'Najmanja isplata (€)', 'najmanja_isplata', '0.01')}
           ${p('c3', 'Početak: obračun do (dan)', 'dan_obracuna', '1')}${p('c4', 'Početak: isplata do (dan)', 'dan_isplate', '1')}${p('c5', 'Obrt: dana između računa', 'dana_izmedu_racuna', '1')}
+          ${p('d1', 'Bez obrta: doprinosi iz bruta (%)', 'doprinosi_iz_posto', '0.1')}${p('d2', 'Bez obrta: porez na dohodak (%)', 'porez_posto', '0.1')}${p('d3', 'Bez obrta: zdravstveno na bruto (%)', 'zdravstveno_na_posto', '0.1')}
           <button class="mali glavni" type="submit" style="grid-column:1/-1;justify-self:start">Spremi</button>
         </form>
         <p class="sitno">Novi partner donosi bodove nakon svoje druge narudžbe. Iznos manji od najmanje isplate prenosi se dalje.</p>
@@ -214,12 +215,39 @@
           <td class="br">${eur(a.u_cekanju)}</td><td class="br"><b>${eur(a.za_obracun)}</b></td><td class="br">${eur(a.racun_ceka)}</td><td class="br">${eur(a.isplaceno)}</td>
           <td>${a.obrt !== 'potvrdeno' && Number(a.za_obracun) > 0 ? '<button class="mali" data-a="obracun">Mjesečni obračun</button>' : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="sitno">Još nema odobrenih agenata.</p>'}
       <h2>Obračuni i isplate</h2>
-      ${isp.length ? `<table><thead><tr><th>Agent</th><th>Razdoblje</th><th class="br">Iznos</th><th>Isplaćeno</th><th></th></tr></thead><tbody>
-        ${isp.map((i) => `<tr data-isp="${i.id}"><td><b>${esc(i.ime_prezime)}</b> · ${esc(i.kod)}</td><td>${dan(i.obracun_od)} – ${dan(i.obracun_do)}</td><td class="br"><b>${eur(i.iznos_eur)}</b></td>
+      ${isp.length ? `<table><thead><tr><th>Agent</th><th>Razdoblje</th><th class="br">Bruto</th><th class="br">Neto (na račun agenta)</th><th>Isplaćeno</th><th></th></tr></thead><tbody>
+        ${isp.map((i) => `<tr data-isp="${i.id}"><td><b>${esc(i.ime_prezime)}</b> · ${esc(i.kod)}</td><td>${dan(i.obracun_od)} – ${dan(i.obracun_do)}</td><td class="br">${eur(i.iznos_eur)}</td><td class="br"><b>${eur(i.neto_eur)}</b>${i.vrsta === 'obrt' ? '<br><span class="sitno">račun obrta</span>' : ''}</td>
           <td>${i.isplaceno ? dan(i.isplaceno) : '<span class="oznakaS ceka">Čeka isplatu</span>'}</td>
           <td>${i.isplaceno ? '' : '<button class="mali glavni" data-a="isplati">Označi isplaćenim</button> <button class="mali" data-a="ponisti">Poništi obračun</button>'}</td></tr>`).join('')}</tbody></table>` : '<p class="sitno">Još nema obračuna.</p>'}
+      <p class="sitno">Agent u aplikaciji vidi samo neto.</p>
+      <section class="plocica" style="gap:12px;max-width:860px">
+        <span class="oznaka">IZVOZ ZA KNJIGOVODSTVO</span>
+        <p class="sitno">Tablica za knjigovođu: isplate agentima i partnerima u odabranom mjesecu i svi obračuni i računi koji još čekaju isplatu. Vrsta, ime ili naziv, OIB, IBAN, razdoblje, bruto, neto, datum isplate i stanje.</p>
+        <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+          <label class="polje">Mjesec isplate<input type="month" id="izvozMj" value="${new Date().toISOString().slice(0, 7)}"></label>
+          <button class="mali glavni" type="button" id="izvoz">Preuzmi tablicu</button>
+        </div>
+        <p class="poruka" id="porI" role="alert"></p>
+      </section>
       <p class="poruka" id="porP" role="alert"></p>`;
     const porU = g.querySelector('#porU'); const porP = g.querySelector('#porP'); const porR = g.querySelector('#porR');
+    g.querySelector('#izvoz').addEventListener('click', async (e) => {
+      const porI = g.querySelector('#porI'); const mj = g.querySelector('#izvozMj').value;
+      if (!/^\d{4}-\d{2}$/.test(mj)) { porI.textContent = 'Odaberite mjesec.'; return; }
+      const b = e.currentTarget; b.disabled = true; porI.textContent = '';
+      try {
+        const red = await rpc('mozon_izvoz_isplata', { mjesec: mj + '-01' });
+        const pol = (x) => { const s = x === null || x === undefined ? '' : String(x); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+        const dt = (x) => { if (!x) return ''; const [y, m2, d2] = String(x).slice(0, 10).split('-'); return `${Number(d2)}.${Number(m2)}.${y}.`; };
+        const zag = ['Vrsta', 'Ime / naziv', 'OIB', 'IBAN', 'Kod', 'Razdoblje od', 'Razdoblje do', 'Bruto (EUR)', 'Neto (EUR)', 'Isplaćeno', 'Stanje'];
+        const linije = [zag.join(';')].concat(red.map((r) => [r.vrsta, r.ime_naziv, r.oib ? `="${r.oib}"` : '', r.iban, r.kod, dt(r.razdoblje_od), dt(r.razdoblje_do), Number(r.bruto_eur).toFixed(2).replace('.', ','), Number(r.neto_eur).toFixed(2).replace('.', ','), dt(r.isplaceno), r.stanje].map(pol).join(';')));
+        const blob = new Blob(['\ufeff' + linije.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `animolio_isplate_${mj}.csv`;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        porI.style.color = 'var(--tekst)'; porI.textContent = red.length ? `Preuzeto. Broj redaka: ${red.length}.` : 'Preuzeto. Za taj mjesec nema isplata ni otvorenih obračuna.';
+      } catch (er) { porI.style.color = ''; porI.textContent = 'Tablica se nije preuzela.'; }
+      b.disabled = false;
+    });
     g.querySelector('#spremiRazine').addEventListener('click', async (e) => {
       const b = e.currentTarget; const po = {};
       for (const inp of g.querySelectorAll('input[data-r]')) {
@@ -238,7 +266,7 @@
       e.preventDefault(); const pr = {};
       for (const inp of g.querySelectorAll('input[data-p]')) { const n = broj(inp.value); if (n !== null && !(n >= 0)) return (porU.textContent = 'Upišite broj od 0 naviše.'); pr[inp.dataset.p] = n; }
       for (const k of ['dan_obracuna', 'dan_isplate']) if (pr[k] !== null && !(Number.isInteger(pr[k]) && pr[k] >= 1 && pr[k] <= 28)) return (porU.textContent = 'Dan u mjesecu mora biti od 1 do 28.');
-      for (const k of ['bod_bocica', 'bod_veleprodaja', 'bod_novi_partner', 'bod_aktivni_partner', 'razdoblje_mjeseci', 'veleprodaja_po_bocici', 'dana_izmedu_racuna']) if (pr[k] === null) return (porU.textContent = 'Sva polja bodova, veleprodaje i razmaka računa moraju biti upisana.');
+      for (const k of ['bod_bocica', 'bod_veleprodaja', 'bod_novi_partner', 'bod_aktivni_partner', 'razdoblje_mjeseci', 'veleprodaja_po_bocici', 'dana_izmedu_racuna', 'doprinosi_iz_posto', 'porez_posto', 'zdravstveno_na_posto']) if (pr[k] === null) return (porU.textContent = 'Sva polja bodova, veleprodaje, razmaka računa i stopa moraju biti upisana.');
       const b = e.submitter; b.disabled = true;
       const { error } = await sb.from('agent_postavke').update(Object.assign(pr, { izmijenjeno: new Date().toISOString() })).eq('id', 1);
       b.disabled = false;
@@ -271,7 +299,7 @@
     const d = await rpc('mozon_zahtjevi');
     const ST = { poslano: '<span class="oznakaS ceka">Čeka isplatu</span>', isplaceno: 'Isplaćeno', vraceno: 'Vraćeno' };
     g.innerHTML = naslov('Zahtjevi za isplatu', 'Agent s obrtom šalje račun za saldo kad želi, najranije tjedan dana nakon prethodne isplate. Platite račun u banci, zatim kliknite „Isplaćeno”.') +
-      (d.length ? `<table><thead><tr><th>Agent</th><th class="br">Iznos</th><th>Prodaje do</th><th>Poslano</th><th>Stanje</th><th></th></tr></thead><tbody>
+      (d.length ? `<table><thead><tr><th>Agent</th><th class="br">Bruto</th><th>Prodaje do</th><th>Poslano</th><th>Stanje</th><th></th></tr></thead><tbody>
         ${d.map((q) => `<tr data-id="${q.id}"><td><b>${esc(q.ime_prezime)}</b> · ${esc(q.kod)}</td><td class="br"><b>${eur(q.iznos_eur)}</b></td><td>${dan(q.do_datuma)}</td><td>${datum(q.poslano)}</td>
           <td>${ST[q.stanje] || ''}${q.stanje === 'vraceno' && q.razlog ? `<br><span class="sitno">${esc(q.razlog)}</span>` : ''}</td>
           <td><button class="mali" data-a="vidi" data-put="${esc(q.racun)}">Pogledaj račun</button>${q.stanje === 'poslano' ? ' <button class="mali glavni" data-a="isplati">Isplaćeno</button> <button class="mali" data-a="vrati">Vrati</button>' : ''}</td></tr>`).join('')}</tbody></table>`
@@ -289,6 +317,59 @@
       b.disabled = true;
       try { await rpc('mozon_zahtjev', { zahtjev: Number(tr.dataset.id), isplati: a === 'isplati', razlog_vracanja: (tr.querySelector('.razlog') || {}).value || null }); prikazi(); }
       catch (er) { b.disabled = false; por.textContent = 'Radnja nije uspjela.'; }
+    }));
+  }
+
+  /* ---------- Provizija partnera (neto, bez PDV-a; mjesečni obračun, plaćanje po računu partnera) ---------- */
+  async function ppartneri(g) {
+    const [{ data: s, error: es }, d, isp] = await Promise.all([
+      sb.from('agent_postavke').select('partner_po_bocici, partner_po_trilogy').eq('id', 1).maybeSingle(),
+      rpc('mozon_partner_provizija'), rpc('mozon_partner_isplate')]);
+    if (es) throw es;
+    const v = (x) => x === null || x === undefined ? '' : Number(x).toFixed(2);
+    g.innerHTML = naslov('Provizija partnera', 'Partner zarađuje po bočici prodanoj s njegovim kodom. Iznosi su bez PDV-a i to je ono što partner vidi u aplikaciji. Obračun jednom mjesečno; partner u aplikaciji šalje račun, vi ga platite u banci i kliknete „Isplaćeno”.') + `
+      <section class="plocica" style="gap:12px;max-width:860px">
+        <span class="oznaka">IZNOSI</span>
+        <form id="pu" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end">
+          <label class="polje">Po bočici (€)<input type="number" id="pb" min="0" step="0.01" inputmode="decimal" value="${v(s && s.partner_po_bocici)}"></label>
+          <label class="polje">TRILOGY po paketu (€)<input type="number" id="pt" min="0" step="0.01" inputmode="decimal" value="${v(s && s.partner_po_trilogy)}"></label>
+          <button class="mali glavni" type="submit" style="justify-self:start">Spremi</button>
+        </form>
+        <p class="sitno">Promjena vrijedi i za prodaje koje još nisu obračunate.</p>
+        <p class="poruka" id="porPU" role="alert"></p>
+      </section>
+      <h2>Stanje po partneru</h2>
+      ${d.length ? `<table><thead><tr><th>Partner</th><th>Agent</th><th class="br">U čekanju</th><th class="br">Za obračun</th><th class="br">Obračunato, neisplaćeno</th><th class="br">Isplaćeno</th><th></th></tr></thead><tbody>
+        ${d.map((x) => `<tr data-id="${x.id}"><td><b>${esc(x.naziv)}</b> · ${esc(x.kod)}</td><td>${esc(x.agent || '')}</td><td class="br">${eur(x.u_cekanju)}</td><td class="br"><b>${eur(x.za_obracun)}</b></td>
+          <td class="br">${eur(x.obracunato_neisplaceno)}</td><td class="br">${eur(x.isplaceno)}</td><td>${Number(x.za_obracun) > 0 ? '<button class="mali" data-a="obracun">Mjesečni obračun</button>' : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="sitno">Još nema odobrenih partnera s kodom.</p>'}
+      <h2>Obračuni i isplate</h2>
+      ${isp.length ? `<table><thead><tr><th>Partner</th><th>Razdoblje</th><th class="br">Iznos</th><th>Račun</th><th>Isplaćeno</th><th></th></tr></thead><tbody>
+        ${isp.map((i) => `<tr data-isp="${i.id}"><td><b>${esc(i.naziv)}</b> · ${esc(i.kod)}</td><td>${dan(i.obracun_od)} – ${dan(i.obracun_do)}</td><td class="br"><b>${eur(i.iznos_eur)}</b></td>
+          <td>${i.racun ? `<button class="mali" data-a="vidi" data-put="${esc(i.racun)}">Pogledaj račun</button>` : '<span class="oznakaS ceka">Čeka račun</span>'}</td>
+          <td>${i.isplaceno ? dan(i.isplaceno) : ''}</td>
+          <td>${i.isplaceno ? '' : (i.racun ? '<button class="mali glavni" data-a="isplati">Isplaćeno</button>' : '<button class="mali" data-a="ponisti">Poništi obračun</button>')}</td></tr>`).join('')}</tbody></table>` : '<p class="sitno">Još nema obračuna.</p>'}
+      <p class="poruka" id="porPP" role="alert"></p>`;
+    const por = g.querySelector('#porPP'); const porU = g.querySelector('#porPU');
+    g.querySelector('#pu').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pb = broj(g.querySelector('#pb').value); const pt = broj(g.querySelector('#pt').value);
+      if (!(pb >= 0) || !(pt >= 0) || pb === null || pt === null) { porU.textContent = 'Upišite oba iznosa, od 0 naviše.'; return; }
+      const b = e.submitter; b.disabled = true;
+      const { error } = await sb.from('agent_postavke').update({ partner_po_bocici: pb, partner_po_trilogy: pt, izmijenjeno: new Date().toISOString() }).eq('id', 1);
+      b.disabled = false;
+      if (error) { porU.textContent = 'Nije spremljeno.'; return; }
+      prikazi();
+    });
+    g.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', async () => {
+      const a = b.dataset.a; const tr = b.closest('tr');
+      if (a === 'vidi') return otvoriDatoteku(b.dataset.put, por);
+      if (!b.dataset.potvrda) { b.dataset.potvrda = '1'; b.textContent = { obracun: 'Potvrdi obračun', isplati: 'Potvrdi: isplaćeno danas', ponisti: 'Potvrdi poništenje' }[a]; return; }
+      b.disabled = true;
+      try {
+        if (a === 'obracun') await rpc('mozon_partner_obracunaj', { partner: tr.dataset.id });
+        else await rpc(a === 'isplati' ? 'mozon_partner_isplati' : 'mozon_partner_ponisti', { isplata: Number(tr.dataset.isp) });
+        prikazi();
+      } catch (er) { b.disabled = false; por.textContent = /nema iznosa/.test(er.message || '') ? 'Nema iznosa za obračun.' : 'Radnja nije uspjela.'; }
     }));
   }
 
