@@ -46,23 +46,130 @@
       if (!oibIspravan(oib)) return A.greska('OIB nije ispravan. Provjerite znamenke.');
       if (adr.length < 5) return A.greska('Upišite adresu lokacije.');
       if (!A.app.querySelector('#priv').checked) return A.greska('Potvrdite da ste pročitali Zaštitu privatnosti.');
-      A.zauzeto(b, true);
       const red = { naziv, oib, adresa: adr }; if (agent) red.agent_id = agent.id;
-      const { data, error } = await A.sb.from('partneri').insert(red).select('*').single();
+      A.zauzeto(b, true);
+      const { data: po } = await A.sb.from('agent_postavke').select('partner_ugovor_u_aplikaciji').maybeSingle();
       A.zauzeto(b, false);
-      if (error) return A.greska(error.code === '23505' ? 'Prijava s ovim OIB-om već postoji. Prijavite se adresom e-pošte s kojom ste se prvi put prijavili ili pišite na animolio@mozon.hr.' : 'Prijava nije poslana. Pokušajte ponovno.');
-      PT.p = data; zast('animolio_agent_kod', null); poslano();
+      if (po && po.partner_ugovor_u_aplikaciji && window.AnimolioUgovorPartner) return zaslonUgovor(red);
+      A.zauzeto(b, true); const ok = await posalji(red); A.zauzeto(b, false); if (ok) poslano();
     });
+  }
+
+  async function posalji(red) {
+    const A = PT.A;
+    const { data, error } = await A.sb.from('partneri').insert(red).select('*').single();
+    if (error) { A.greska(error.code === '23505' ? 'Prijava s ovim OIB-om već postoji. Prijavite se adresom e-pošte s kojom ste se prvi put prijavili ili pišite na animolio@mozon.hr.' : 'Prijava nije poslana. Pokušajte ponovno.'); return false; }
+    PT.p = data; zast('animolio_agent_kod', null); return true;
+  }
+
+  // Ugovor s potpisom prstom (kad ga MOZON uključi): pročitati do kraja, kod iz e-pošte, potpis.
+  function zaslonUgovor(red) {
+    const A = PT.A; const U = window.AnimolioUgovorPartner; let procitano = false; let kodOk = false; let crtano = false;
+    A.prikazi(`${vrhP(A, true)}<h1>Ugovor o suradnji</h1>
+      <label class="polje">Ime i prezime osobe koja potpisuje<input type="text" id="potpisnik" maxlength="80" autocomplete="name"></label>
+      <div id="ugovor" tabindex="0" style="height:260px;overflow-y:auto;border:1px solid var(--rub);border-radius:14px;background:var(--kartica);padding:16px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.5;color:var(--tekst)"></div>
+      <div id="korak2" style="display:flex;flex-direction:column;gap:10px;opacity:.4;pointer-events:none">
+        <button class="gumb drugi" type="button" id="posaljiKod">Pošalji kod za potpis na ${A.esc(A.S.korisnik.email)}</button>
+        <input type="text" id="kodPotpis" class="kod" inputmode="numeric" autocomplete="one-time-code" maxlength="10" aria-label="Kod za potpis">
+        <div style="position:relative;height:150px;border:1.5px dashed #BBA996;border-radius:14px;background:#FFFFFF">
+          <span style="position:absolute;left:14px;top:10px;font-size:12px;font-weight:600;color:#6E5C50">Potpis prstom</span>
+          <button type="button" id="obrisi" style="position:absolute;right:10px;top:8px;border:1px solid var(--rub);background:var(--kartica);color:var(--tekst);border-radius:10px;padding:0 12px;font:inherit;font-size:13px;font-weight:600;height:36px">Obriši</button>
+          <canvas id="platno" style="width:100%;height:100%;touch-action:none;display:block"></canvas>
+        </div>
+      </div>
+      <p class="poruka" role="alert"></p>
+      <div class="dno"><button class="gumb" type="button" id="potpisi" disabled>Pročitajte ugovor do kraja</button></div>`, prijava);
+    const ug = A.app.querySelector('#ugovor'); const k2 = A.app.querySelector('#korak2'); const gb = A.app.querySelector('#potpisi'); const pn = A.app.querySelector('#potpisnik');
+    const crtajTekst = () => { const st = ug.scrollTop; ug.innerHTML = U.html(Object.assign({}, red, { potpisnik: pn.value.trim() })) + '<span style="font-weight:700;text-align:center">Kraj ugovora</span>'; ug.scrollTop = st; };
+    crtajTekst(); pn.addEventListener('input', crtajTekst);
+    const osvjezi = () => {
+      if (!procitano) return;
+      k2.style.opacity = 1; k2.style.pointerEvents = 'auto';
+      const imaIme = pn.value.trim().length >= 3;
+      gb.disabled = !(kodOk && crtano && imaIme);
+      gb.textContent = !imaIme ? 'Upišite ime i prezime' : kodOk && crtano ? 'Potpiši i pošalji' : (kodOk ? 'Potpišite se prstom' : 'Upišite kod iz e-pošte');
+    };
+    pn.addEventListener('input', osvjezi);
+    const provjeriKraj = () => { if (ug.scrollTop + ug.clientHeight >= ug.scrollHeight - 8) { procitano = true; osvjezi(); } };
+    ug.addEventListener('scroll', provjeriKraj); setTimeout(provjeriKraj, 50);
+    A.app.querySelector('#posaljiKod').addEventListener('click', async (e) => {
+      A.zauzeto(e.target, true);
+      const { error } = await A.sb.auth.signInWithOtp({ email: A.S.korisnik.email, options: { shouldCreateUser: false } });
+      A.zauzeto(e.target, false);
+      if (error) A.greska('Kod nije poslan. Pričekajte minutu pa pokušajte ponovno.'); else dobro(A, 'Kod je poslan. Upišite ga ispod.');
+    });
+    const kp = A.app.querySelector('#kodPotpis');
+    const provjeriKod = async (rucno) => {
+      const t = kp.value.replace(/\D/g, '');
+      if (kodOk) return;
+      if (t.length < 8 && !(rucno && t.length >= 6)) return osvjezi();
+      const { error } = await A.sb.auth.verifyOtp({ email: A.S.korisnik.email, token: t, type: 'email' });
+      kodOk = !error; kp.style.borderColor = error ? 'var(--greska)' : 'var(--tekst)';
+      if (error) A.greska('Kod nije ispravan ili je istekao.'); else { dobro(A, 'Kod je potvrđen.'); kp.disabled = true; }
+      osvjezi();
+    };
+    kp.addEventListener('input', () => provjeriKod(false));
+    kp.addEventListener('change', () => provjeriKod(true));
+    const c = A.app.querySelector('#platno'); const x = c.getContext('2d');
+    const r0 = c.getBoundingClientRect(); const d = window.devicePixelRatio || 1; c.width = r0.width * d; c.height = r0.height * d; x.scale(d, d); x.lineWidth = 2.4; x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#3A2A21';
+    let crta = false;
+    const tocka = (ev) => { const r = c.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
+    c.addEventListener('pointerdown', (ev) => { crta = true; c.setPointerCapture(ev.pointerId); const [px, py] = tocka(ev); x.beginPath(); x.moveTo(px, py); });
+    c.addEventListener('pointermove', (ev) => { if (!crta) return; const [px, py] = tocka(ev); x.lineTo(px, py); x.stroke(); if (!crtano) { crtano = true; osvjezi(); } });
+    c.addEventListener('pointerup', () => { crta = false; });
+    A.app.querySelector('#obrisi').addEventListener('click', () => { x.clearRect(0, 0, c.width, c.height); crtano = false; osvjezi(); });
+    gb.addEventListener('click', async () => {
+      A.zauzeto(gb, true);
+      const potpisnik = pn.value.trim().replace(/\s+/g, ' ');
+      const r = Object.assign({}, red, { potpisnik, ugovor_verzija: U.VERZIJA, potpis: c.toDataURL('image/png') });
+      r.ugovor_hash = await U.sazetak(Object.assign({}, red, { potpisnik }));
+      const ok = await posalji(r);
+      A.zauzeto(gb, false);
+      if (ok) poslano();
+    });
+  }
+
+  // Potpisani ugovor (samo pregled)
+  function zaslonMojUgovor() {
+    const A = PT.A; const p = PT.p; const U = window.AnimolioUgovorPartner;
+    const kad = new Date(p.potpisano);
+    A.prikazi(`${vrhP(A, true)}<h1>Ugovor o suradnji</h1>
+      <div style="border:1px solid var(--rub);border-radius:14px;background:var(--kartica);padding:16px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.5;color:var(--tekst)">${U.html(p)}</div>
+      <div class="kartica"><span class="oznaka">POTPISANO</span>${p.mozon_potpisano ? `<span>Za Naručitelja: ${A.esc(p.mozon_potpisao || '')} · ${datU(p.mozon_potpisano)}</span>` : ''}<span>Za Suradnika: ${A.esc(p.potpisnik || '')} · ${kad.getDate()}. ${kad.getMonth() + 1}. ${kad.getFullYear()}. u ${String(kad.getHours()).padStart(2, '0')}:${String(kad.getMinutes()).padStart(2, '0')}</span>
+        ${p.potpis ? `<img src="${A.esc(p.potpis)}" alt="Potpis" style="max-width:100%;height:110px;object-fit:contain;background:#fff;border-radius:10px">` : ''}</div>`, pocetna);
+    window.scrollTo(0, 0);
+  }
+
+  // Primopredaja uzoraka: partner potvrđuje primitak
+  const datU = (d) => { const x = new Date(d); return `${x.getDate()}. ${x.getMonth() + 1}. ${x.getFullYear()}.`; };
+  async function uzorci(A, el, osvjezi) {
+    if (!el) return;
+    const { data, error } = await A.sb.rpc('partner_uzorci');
+    if (error || !data || !data.length) { el.innerHTML = ''; return; }
+    const st = (u) => [['SVEN', u.sven], ['MARCY', u.marcy], ['FLUFFY', u.fluffy], ['TRILOGY', u.trilogy]].filter((x) => x[1] > 0).map((x) => `${x[0]} ${x[1]}`).join(' · ');
+    const ceka = data.filter((u) => !u.potvrdeno);
+    el.innerHTML = ceka.map((u) => `<div class="kartica"><span class="oznaka">PRIMITAK UZORAKA</span><b>${st(u)}</b>
+        <span class="sitno">Predao ${A.esc(u.predao)}, ${datU(u.predano)}</span>
+        <button class="gumb mali" type="button" data-uzorak="${u.id}">Potvrđujem primitak</button></div>`).join('');
+    el.querySelectorAll('[data-uzorak]').forEach((b) => b.addEventListener('click', async () => {
+      A.zauzeto(b, true);
+      const { error: e2 } = await A.sb.rpc('partner_potvrdi_uzorke', { stavka: Number(b.dataset.uzorak) });
+      A.zauzeto(b, false);
+      if (e2) return A.greska('Potvrda nije spremljena. Pokušajte ponovno.');
+      osvjezi();
+    }));
   }
 
   function poslano() {
     const A = PT.A;
     A.prikazi(`${vrhP(A, false)}<div class="sredina centar" style="align-items:center"><h1>Prijava je poslana</h1>
       <p style="max-width:300px">MOZON pregledava prijavu. Kad bude odobrena, ovdje ćete vidjeti svoj kod za kupce.</p></div>
+      <div id="uzorci" style="display:flex;flex-direction:column;gap:12px"></div>
       <p class="poruka" role="alert"></p><div class="dno"><button class="gumb drugi" id="osvjezi">Provjeri ponovno</button><button class="veza" id="odjava">Odjava</button></div>`);
+    uzorci(A, A.app.querySelector('#uzorci'), poslano);
     A.app.querySelector('#osvjezi').addEventListener('click', async () => {
       const { data } = await A.sb.from('partneri').select('*').eq('id', A.S.korisnik.id).maybeSingle(); PT.p = data;
-      if (data && data.stanje === 'odobren') pocetna(); else dobro(A, 'Prijava još čeka odobrenje.');
+      if (data && data.stanje === 'odobren') pocetna(); else { await uzorci(A, A.app.querySelector('#uzorci'), poslano); dobro(A, 'Prijava još čeka odobrenje.'); }
     });
     A.app.querySelector('#odjava').addEventListener('click', odjava);
   }
@@ -79,16 +186,22 @@
     const A = PT.A; const p = PT.p; const link = adresa() + '?kod=' + encodeURIComponent(p.kod);
     A.prikazi(`${A.zaglavlje('ANIMOLIO PARTNER')}<h1>${A.esc(p.naziv)}</h1>
       <div id="novo"></div>
+      <div id="uzorci" style="display:flex;flex-direction:column;gap:12px"></div>
       <div id="zarada" style="display:flex;flex-direction:column;gap:12px"></div>
       <div class="kartica" style="flex-direction:row;align-items:center;gap:16px"><div class="qr-okvir">${qrSvg(link, 120)}</div>
         <div style="display:flex;flex-direction:column;gap:6px"><span class="oznaka">KOD ZA KUPCE</span><span class="kod-srednji">${A.esc(p.kod)}</span></div></div>
+      <button class="gumb" type="button" id="letak">Letak za ispis</button>
       <button class="gumb drugi" id="dijeli">Podijeli poveznicu za kupce</button>
       <div class="kartica"><span class="oznaka">AKADEMIJA ZA PARTNERE</span>
         <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.45">${PRAVILA.map((t) => `<li>${t}</li>`).join('')}</ul>
         ${p.pravila_procitana ? '<span class="sitno">Potvrđeno.</span>' : '<button class="gumb mali" id="procitao">Pročitao/la sam što smijemo reći kupcima</button>'}
       </div>
+      ${p.potpisano ? '<button class="gumb drugi" type="button" id="mojUgovor">Ugovor o suradnji</button>' : ''}
       <p class="poruka" role="alert"></p><div class="dno"><button class="veza" id="odjava">Odjava</button></div>`);
     A.app.querySelector('#odjava').addEventListener('click', odjava);
+    A.app.querySelector('#letak').addEventListener('click', () => { if (window.AnimolioLetak) window.AnimolioLetak.otvori({ kod: p.kod, naziv: p.naziv, link }); });
+    const mu = A.app.querySelector('#mojUgovor'); if (mu) mu.addEventListener('click', zaslonMojUgovor);
+    uzorci(A, A.app.querySelector('#uzorci'), pocetna);
     A.vezPostavke(pocetna);
     if (window.AnimolioNovo) window.AnimolioNovo.u(A, 'partner', A.app.querySelector('#novo'), pocetna);
     zarada(A, A.app.querySelector('#zarada'));
