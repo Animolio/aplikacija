@@ -56,7 +56,7 @@
 
   async function ucitaj(A) {
     const [po, pr, pd, ob, pt, zr, is, rz] = await Promise.all([
-      A.sb.from('agent_postavke').select('dana_cekanja, dan_isplate, dana_izmedu_racuna, doprinosi_iz_posto, porez_posto, akademija_postoji, bod_bocica, bod_veleprodaja, bod_novi_partner, bod_aktivni_partner').maybeSingle(),
+      A.sb.from('agent_postavke').select('dana_cekanja, dan_isplate, dana_izmedu_racuna, akademija_postoji, bod_bocica, bod_veleprodaja, bod_novi_partner, bod_aktivni_partner').maybeSingle(),
       A.sb.rpc('agent_pregled'),
       A.sb.rpc('agent_prodaje'),
       A.sb.from('obavijesti').select('id, naslov, tekst, kljucna, od').eq('za', 'agent').order('od', { ascending: false }),
@@ -66,25 +66,12 @@
       A.sb.rpc('agent_stanje')
     ]);
     const potvrdeno = new Set((pt.data || []).map((x) => x.obavijest_id));
-    // Agent vidi samo neto (Zdravko 5.11.2026.). Bez obrta: bruto umanjen za doprinose i porez drugog dohotka; s obrtom: iznos njegova računa.
-    const kl = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)));
-    rz.data = kl(rz.data); pd.data = kl(pd.data); is.data = kl(is.data); zr.data = kl(zr.data);
-    const st0 = rz.data || {}; const s0 = po.data || {};
-    const obrt = st0.obrt === 'potvrdeno' && st0.razina && st0.razina.redni >= 2;
-    const k = obrt ? 1 : (1 - Number(s0.doprinosi_iz_posto || 0) / 100) * (1 - Number(s0.porez_posto || 0) / 100);
-    const n = (v) => (v === null || v === undefined ? v : Math.round(Number(v) * k * 100) / 100);
-    const zr0 = (Array.isArray(zr.data) ? zr.data[0] : zr.data) || {};
-    ['mjesec', 'u_cekanju', 'za_isplatu', 'isplaceno'].forEach((x) => { if (x in zr0) zr0[x] = n(zr0[x]); });
-    (pd.data || []).forEach((x) => { x.provizija_eur = n(x.provizija_eur); });
-    if (!obrt) (is.data || []).forEach((x) => { x.iznos_eur = n(x.iznos_eur); });
-    if (st0.razina) st0.razina.po_bocici = n(st0.razina.po_bocici);
-    if (st0.iduca && st0.iduca.po_bocici !== undefined) st0.iduca.po_bocici = n(st0.iduca.po_bocici);
     return {
       greska: !!(pr.error || pd.error || zr.error),
       postavke: po.data || {},
       partneri: pr.data || [],
       prodaje: pd.data || [],
-      zarada: zr0,
+      zarada: (Array.isArray(zr.data) ? zr.data[0] : zr.data) || {},
       isplate: is.data || [],
       stanje: rz.data || null,
       razina: (rz.data && rz.data.razina) || null,
@@ -124,7 +111,7 @@
       if (s.dan_isplate) { const x = new Date(sad.getFullYear(), sad.getMonth() + (sad.getDate() > s.dan_isplate ? 1 : 0), Number(s.dan_isplate)); isplata = `za isplatu do ${x.getDate()}. ${x.getMonth() + 1}.`; }
       desno = `<div><b>${iznos(z.za_isplatu)} €</b><span>${isplata}</span></div>`;
     }
-    return `<div class="zarada-kartica"><span class="zk-oznaka">Vaša ${obrt ? 'zarada' : 'neto zarada'} u ${MJESECI[sad.getMonth()]}</span>
+    return `<div class="zarada-kartica"><span class="zk-oznaka">Vaša zarada u ${MJESECI[sad.getMonth()]}</span>
       <span class="zk-broj">${iznos(z.mjesec)} <small>€</small></span>
       <div class="zk-dno"><div><b>${iznos(z.u_cekanju)} €</b><span>u čekanju${s.dana_cekanja ? ` (${s.dana_cekanja} dana)` : ''}</span></div>${desno}</div>
       <span class="zk-oznaka">${bocice(bociceMj(d))} prodano preko vaših partnera ovaj mjesec</span></div>
