@@ -124,7 +124,7 @@
       if (s.dan_isplate) { const x = new Date(sad.getFullYear(), sad.getMonth() + (sad.getDate() > s.dan_isplate ? 1 : 0), Number(s.dan_isplate)); isplata = `za isplatu do ${x.getDate()}. ${x.getMonth() + 1}.`; }
       desno = `<div><b>${iznos(z.za_isplatu)} €</b><span>${isplata}</span></div>`;
     }
-    return `<div class="zarada-kartica"><span class="zk-oznaka">Vaša ${obrt ? 'zarada' : 'neto zarada'} u ${MJESECI[sad.getMonth()]}${obrt ? ', bez PDV-a' : ''}</span>
+    return `<div class="zarada-kartica"><span class="zk-oznaka">Vaša ${obrt ? 'zarada' : 'neto zarada'} u ${MJESECI[sad.getMonth()]}</span>
       <span class="zk-broj">${iznos(z.mjesec)} <small>€</small></span>
       <div class="zk-dno"><div><b>${iznos(z.u_cekanju)} €</b><span>u čekanju${s.dana_cekanja ? ` (${s.dana_cekanja} dana)` : ''}</span></div>${desno}</div>
       <span class="zk-oznaka">${bocice(bociceMj(d))} prodano preko vaših partnera ovaj mjesec</span></div>
