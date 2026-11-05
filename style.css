@@ -182,3 +182,4 @@ input[type="file"] { font: inherit; font-size: 15px; color: var(--tekst); paddin
 .clanak .uvod { font-style: italic; color: var(--blago); }
 .clanak ul, .clanak ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
 .clanak p { margin: 0; }
+#app input[type=number] { height: 54px; border-radius: var(--r); border: 1.5px solid var(--rub); background: var(--kartica); padding: 0 16px; font: inherit; font-size: 17px; color: var(--tekst); width: 100%; }
