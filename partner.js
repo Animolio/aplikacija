@@ -79,6 +79,7 @@
     const A = PT.A; const p = PT.p; const link = adresa() + '?kod=' + encodeURIComponent(p.kod);
     A.prikazi(`${A.zaglavlje('ANIMOLIO PARTNER')}<h1>${A.esc(p.naziv)}</h1>
       <div id="novo"></div>
+      <div id="zarada" style="display:flex;flex-direction:column;gap:12px"></div>
       <div class="kartica" style="flex-direction:row;align-items:center;gap:16px"><div class="qr-okvir">${qrSvg(link, 120)}</div>
         <div style="display:flex;flex-direction:column;gap:6px"><span class="oznaka">KOD ZA KUPCE</span><span class="kod-srednji">${A.esc(p.kod)}</span></div></div>
       <button class="gumb drugi" id="dijeli">Podijeli poveznicu za kupce</button>
@@ -90,6 +91,7 @@
     A.app.querySelector('#odjava').addEventListener('click', odjava);
     A.vezPostavke(pocetna);
     if (window.AnimolioNovo) window.AnimolioNovo.u(A, 'partner', A.app.querySelector('#novo'), pocetna);
+    zarada(A, A.app.querySelector('#zarada'));
     A.app.querySelector('#dijeli').addEventListener('click', async () => {
       try { if (navigator.share) await navigator.share({ title: 'Animolio Klub', url: link }); else { await navigator.clipboard.writeText(link); dobro(A, 'Poveznica je kopirana.'); } } catch (e) {}
     });
@@ -98,6 +100,54 @@
       A.zauzeto(pr, true); const { error } = await A.sb.rpc('partner_procitao'); A.zauzeto(pr, false);
       if (error) return A.greska('Nije spremljeno. Pokušajte ponovno.');
       PT.p.pravila_procitana = new Date().toISOString(); pocetna();
+    });
+  }
+
+  // Zarada partnera: samo neto, bez PDV-a (Zdravko 5.11.2026.). Obračun mjesečno, plaćanje po računu partnera.
+  const MJ = ['siječnju', 'veljači', 'ožujku', 'travnju', 'svibnju', 'lipnju', 'srpnju', 'kolovozu', 'rujnu', 'listopadu', 'studenom', 'prosincu'];
+  const eurP = (v) => Number(v || 0).toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const datP = (d) => { const x = new Date(String(d).length === 10 ? d + 'T12:00:00' : d); return `${x.getDate()}. ${x.getMonth() + 1}. ${x.getFullYear()}.`; };
+  const bocP = (n) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'bočica' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 'bočice' : 'bočica'}`;
+  async function zarada(A, el) {
+    if (!el) return;
+    const [zr, is] = await Promise.all([A.sb.rpc('partner_zarada'), A.sb.from('partner_isplate').select('id, obracun_od, obracun_do, iznos_eur, racun, isplaceno').order('obracun_do', { ascending: false })]);
+    if (zr.error || is.error) { el.innerHTML = ''; return; }
+    const z = (Array.isArray(zr.data) ? zr.data[0] : zr.data) || {}; const isp = is.data || [];
+    const ceka = isp.filter((i) => !i.isplaceno && !i.racun);
+    el.innerHTML = `<div class="zarada-kartica"><span class="zk-oznaka">Vaša zarada u ${MJ[new Date().getMonth()]}, bez PDV-a</span>
+        <span class="zk-broj">${eurP(z.mjesec)} <small>€</small></span>
+        <div class="zk-dno"><div><b>${eurP(z.u_cekanju)} €</b><span>u čekanju${z.dana_cekanja ? ` (${z.dana_cekanja} dana)` : ''}</span></div><div><b>${eurP(z.za_obracun)} €</b><span>za idući obračun</span></div></div>
+        <span class="zk-oznaka">${bocP(Number(z.bocica_mjesec || 0))} prodano s vašim kodom ovaj mjesec</span></div>
+      ${ceka.map((i) => `<button class="gumb" type="button" data-racun="${i.id}">Pošalji račun na ${eurP(i.iznos_eur)} €</button>`).join('')}
+      ${isp.length ? `<span class="oznaka">OBRAČUNI I ISPLATE</span><div class="kartica lista">${isp.map((i) => `<div class="stavka"><div class="stavka-tekst"><b>Obračun ${datP(i.obracun_od)} – ${datP(i.obracun_do)}</b>
+        <span class="sitno">${i.isplaceno ? `Isplaćeno ${datP(i.isplaceno)}` : i.racun ? 'Račun primljen, čeka isplatu' : 'Čeka vaš račun'}</span></div><b>${eurP(i.iznos_eur)} €</b></div>`).join('')}</div>` : ''}`;
+    el.querySelectorAll('[data-racun]').forEach((b) => b.addEventListener('click', () => {
+      const i = isp.find((x) => x.id === Number(b.dataset.racun)); if (i) zaslonRacun(A, i);
+    }));
+  }
+  function zaslonRacun(A, i) {
+    A.prikazi(`${vrhP(A, true)}<h1>Pošalji račun</h1>
+      <div class="kartica"><span class="oznaka">NA RAČUNU MORA PISATI</span>
+        <span>Kupac: <b>MOZON d.o.o.</b>, Malo Budaševo 86, 44202 Budaševo, OIB 90016851974</span>
+        <span>Opis: <b>Usluga preporuke Animolio proizvoda, ${datP(i.obracun_od)} – ${datP(i.obracun_do)}</b></span>
+        <span>Iznos bez PDV-a: <b>${eurP(i.iznos_eur)} €</b></span>
+</div>
+      <label class="polje">Račun (PDF ili fotografija, do 10 MB)<input type="file" id="dat" accept="application/pdf,image/jpeg,image/png,image/heic,image/webp"></label>
+      <p class="poruka" role="alert"></p>
+      <div class="dno"><button class="gumb" type="button" id="salji">Pošalji</button></div>`, pocetna);
+    A.app.querySelector('#salji').addEventListener('click', async (e) => {
+      const f = A.app.querySelector('#dat').files[0];
+      if (!f) return A.greska('Odaberite datoteku.');
+      if (f.size > 10485760) return A.greska('Datoteka je veća od 10 MB.');
+      const ext = ((f.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '')) || 'pdf';
+      const put = `${A.S.korisnik.id}/racuni/${Date.now()}.${ext}`;
+      const b = e.currentTarget; A.zauzeto(b, true);
+      const up = await A.sb.storage.from('agenti').upload(put, f, { contentType: f.type || undefined, upsert: false });
+      if (up.error) { A.zauzeto(b, false); return A.greska('Datoteka nije učitana. Pokušajte ponovno.'); }
+      const r = await A.sb.rpc('partner_posalji_racun', { isplata: i.id, putanja: put });
+      A.zauzeto(b, false);
+      if (r.error) return A.greska('Slanje nije uspjelo. Pokušajte ponovno.');
+      pocetna();
     });
   }
 
