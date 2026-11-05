@@ -114,7 +114,7 @@
     if (zr.error || is.error) { el.innerHTML = ''; return; }
     const z = (Array.isArray(zr.data) ? zr.data[0] : zr.data) || {}; const isp = is.data || [];
     const ceka = isp.filter((i) => !i.isplaceno && !i.racun);
-    el.innerHTML = `<div class="zarada-kartica"><span class="zk-oznaka">Vaša zarada u ${MJ[new Date().getMonth()]}, bez PDV-a</span>
+    el.innerHTML = `<div class="zarada-kartica"><span class="zk-oznaka">Vaša zarada u ${MJ[new Date().getMonth()]}</span>
         <span class="zk-broj">${eurP(z.mjesec)} <small>€</small></span>
         <div class="zk-dno"><div><b>${eurP(z.u_cekanju)} €</b><span>u čekanju${z.dana_cekanja ? ` (${z.dana_cekanja} dana)` : ''}</span></div><div><b>${eurP(z.za_obracun)} €</b><span>za idući obračun</span></div></div>
         <span class="zk-oznaka">${bocP(Number(z.bocica_mjesec || 0))} prodano s vašim kodom ovaj mjesec</span></div>
