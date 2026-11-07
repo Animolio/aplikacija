@@ -197,12 +197,19 @@ ${isplataHtml(d)}`;
     return `<div class="okvir">Kad MOZON odobri vašeg prvog partnera, ovdje se pojavljuje plan obilaska.</div>`;
   }
 
+  // Knjižice za potencijalne partnere (ispis ili dijeljenje poveznice)
+  const MATERIJALI = [['veterinari', 'Veterinari'], ['saloni', 'Saloni za njegu'], ['trgovine', 'Trgovine za ljubimce'], ['partneri', 'Ostali partneri']];
+
   function sadrzaj(A, a, d) {
     const plan = planRed(d.partneri);
     const ruta = rutaUrl(plan);
     if (T.kartica === 'partneri') {
       return `<h1>Partneri</h1>
         <button class="gumb" type="button" id="noviPartner">Novi partner</button>
+        <div class="kartica lista"><span class="oznaka">MATERIJALI ZA OBILAZAK</span>
+          ${MATERIJALI.map(([za, naziv]) => `<div class="stavka"><div class="stavka-tekst"><b>${naziv}</b></div>
+            <div style="display:flex;gap:18px;align-items:center;flex:none"><button class="veza mala" type="button" data-otvori="${za}" style="margin:0">Otvori</button>
+            <button class="veza mala" type="button" data-dijeli="${za}" style="margin:0">Podijeli</button></div></div>`).join('')}</div>
         ${d.partneri.length ? `<div class="kartica lista">${d.partneri.map((p) => { const st = stanjePartnera(p); return `<div class="stavka">
           <div class="stavka-tekst"><b>${A.esc(p.naziv)}</b><span class="sitno">${p.stanje === 'odobren'
             ? `${bocice(Number(p.bocica_30))} u 30 dana · ${razlog(p).toLowerCase()}`
@@ -261,6 +268,15 @@ ${isplataHtml(d)}`;
       A.zauzeto(b, false);
       if (error) return A.greska('Potvrda nije spremljena. Pokušajte ponovno.');
       prikazi(A, a, natrag);
+    }));
+    A.app.querySelectorAll('[data-otvori]').forEach((b) => b.addEventListener('click', () => {
+      window.open(new URL('materijali/knjizica.html?za=' + b.dataset.otvori, location.href).href, '_blank', 'noopener');
+    }));
+    A.app.querySelectorAll('[data-dijeli]').forEach((b) => b.addEventListener('click', async () => {
+      const u = new URL('materijali/knjizica.html?za=' + b.dataset.dijeli, location.href).href;
+      const naziv = (MATERIJALI.find((m) => m[0] === b.dataset.dijeli) || [])[1] || '';
+      if (navigator.share) { try { await navigator.share({ title: 'Animolio — ' + naziv, url: u }); } catch (e) {} return; }
+      try { await navigator.clipboard.writeText(u); b.textContent = 'Kopirano'; } catch (e) { window.open(u, '_blank', 'noopener'); }
     }));
     A.app.querySelectorAll('[data-uzorci]').forEach((b) => b.addEventListener('click', () => {
       const p = T.d.partneri.find((x) => x.id === b.dataset.uzorci); if (p) zaslonUzorci(A, p, () => prikazi(A, a, natrag));
