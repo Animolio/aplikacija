@@ -226,10 +226,10 @@
     const [zr, is] = await Promise.all([A.sb.rpc('partner_zarada'), A.sb.from('partner_isplate').select('id, obracun_od, obracun_do, iznos_eur, racun, isplaceno').order('obracun_do', { ascending: false })]);
     if (zr.error || is.error) { el.innerHTML = ''; return; }
     const z = (Array.isArray(zr.data) ? zr.data[0] : zr.data) || {}; const isp = is.data || [];
-    const ceka = isp.filter((i) => !i.isplaceno && !i.racun);
+    const ceka = z.ugovor ? isp.filter((i) => !i.isplaceno && !i.racun) : [];
     el.innerHTML = `<div class="zarada-kartica"><span class="zk-oznaka">Vaša zarada u ${MJ[new Date().getMonth()]}</span>
         <span class="zk-broj">${eurP(z.mjesec)} <small>€</small></span>
-        <div class="zk-dno"><div><b>${eurP(z.u_cekanju)} €</b><span>u čekanju${z.dana_cekanja ? ` (${z.dana_cekanja} dana)` : ''}</span></div><div><b>${eurP(z.za_obracun)} €</b><span>za idući obračun</span></div></div>
+        ${z.ugovor ? `<div class="zk-dno"><div><b>${eurP(z.u_cekanju)} €</b><span>u čekanju${z.dana_cekanja ? ` (${z.dana_cekanja} dana)` : ''}</span></div><div><b>${eurP(z.za_obracun)} €</b><span>za idući obračun</span></div></div>` : '<span class="zk-oznaka">Probno razdoblje · bez isplate</span>'}
         <span class="zk-oznaka">${bocP(Number(z.bocica_mjesec || 0))} prodano s vašim kodom ovaj mjesec</span></div>
       ${ceka.map((i) => `<button class="gumb" type="button" data-racun="${i.id}">Pošalji račun na ${eurP(i.iznos_eur)} €</button>`).join('')}
       ${isp.length ? `<span class="oznaka">OBRAČUNI I ISPLATE</span><div class="kartica lista">${isp.map((i) => `<div class="stavka"><div class="stavka-tekst"><b>Obračun ${datP(i.obracun_od)} – ${datP(i.obracun_do)}</b>
