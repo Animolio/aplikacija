@@ -142,7 +142,7 @@
       <p class="poruka" id="porUg" role="alert"></p>` + (d.length ? `<table><thead><tr><th>Naziv</th><th>OIB</th><th>Adresa</th><th>E-pošta</th><th>Agent</th><th>Kod</th><th>Ugovor</th><th>Pravila</th><th>Stanje</th><th></th></tr></thead><tbody>
       ${d.map((p) => `<tr data-id="${p.id}"><td><b>${esc(p.naziv)}</b><br><span class="sitno">${datum(p.stvoreno)}</span></td><td>${esc(p.oib)}</td><td>${esc(p.adresa)}</td><td>${esc(p.email)}</td>
         <td>${p.agent ? esc(p.agent) + ' · ' + esc(p.agent_kod) : '<span class="sitno">bez agenta</span>'}</td><td><b>${esc(p.kod || '')}</b></td>
-        <td>${p.potpisano ? `${datum(p.potpisano)}<br><button class="mali" data-a="ugovor">Pogledaj</button>` : ''}</td>
+        <td>${p.potpisano ? `${datum(p.potpisano)}<br><button class="mali" data-a="ugovor">Pogledaj</button>` : p.ugovor_potpisan ? `Papir · ${dan(p.ugovor_potpisan)}<br><button class="mali" data-a="papirx">Poništi</button>` : p.stanje === 'odobren' ? '<span class="sitno">Bez ugovora</span><br><button class="mali" data-a="papir">Ugovor potpisan</button>' : ''}</td>
         <td>${p.pravila_procitana ? 'Potvrđeno ' + datum(p.pravila_procitana) : ''}</td>
         <td><span class="oznakaS ${p.stanje === 'prijava' ? 'ceka' : ''}">${ST[p.stanje] || ''}</span></td>
         <td>${p.stanje === 'prijava' ? `<button class="mali glavni" data-a="odobri">${p.potpisano ? 'Potpiši i odobri' : 'Odobri'}</button> <button class="mali" data-a="odbij">Odbij</button>` : (p.stanje === 'odobren' ? `<button class="mali" data-a="dobro" data-kod="${esc(p.kod || '')}">${p.potpisano ? 'Pošalji ugovor i letak' : 'Pošalji letak'}</button> <button class="mali" data-a="raskid">Raskid suradnje</button>` : '')}</td></tr>`).join('')}</tbody></table><p class="poruka" id="porPa" role="alert"></p><div id="ugovorPregled"></div>` : '<p class="sitno">Još nema prijava partnera.</p>');
@@ -166,6 +166,14 @@
           ${u.potpis ? `<img src="${esc(u.potpis)}" alt="Potpis" style="height:110px;max-width:360px;object-fit:contain;background:#fff;border:1px solid #E8DFD3;border-radius:10px">` : ''}
           <p class="sitno">${isti ? 'Tekst odgovara potpisanom ugovoru.' : 'Tekst se ne podudara s potpisanom verzijom: provjerite verziju ugovora.'}</p></section>`;
         el.scrollIntoView({ behavior: 'smooth' }); return;
+      }
+      if (b.dataset.a === 'papir' || b.dataset.a === 'papirx') {
+        if (b.textContent !== 'Potvrdi') { b.textContent = 'Potvrdi'; return; }
+        b.disabled = true;
+        const dd = new Date(); const danas = `${dd.getFullYear()}-${String(dd.getMonth() + 1).padStart(2, '0')}-${String(dd.getDate()).padStart(2, '0')}`;
+        try { await rpc('mozon_ugovor_potpisan', { partner: id, datum: b.dataset.a === 'papir' ? danas : null }); prikazi(); }
+        catch (er) { b.disabled = false; por.style.color = ''; por.textContent = 'Nije spremljeno.'; }
+        return;
       }
       if (b.dataset.a === 'odbij' && b.textContent !== 'Potvrdi brisanje') { b.textContent = 'Potvrdi brisanje'; return; }
       if (b.dataset.a === 'raskid' && b.textContent !== 'Potvrdi raskid') { b.textContent = 'Potvrdi raskid'; return; }
@@ -416,7 +424,7 @@
       <h2>Stanje po partneru</h2>
       ${d.length ? `<table><thead><tr><th>Partner</th><th>Agent</th><th class="br">U čekanju</th><th class="br">Za obračun</th><th class="br">Obračunato, neisplaćeno</th><th class="br">Isplaćeno</th><th></th></tr></thead><tbody>
         ${d.map((x) => `<tr data-id="${x.id}"><td><b>${esc(x.naziv)}</b> · ${esc(x.kod)}</td><td>${esc(x.agent || '')}</td><td class="br">${eur(x.u_cekanju)}</td><td class="br"><b>${eur(x.za_obracun)}</b></td>
-          <td class="br">${eur(x.obracunato_neisplaceno)}</td><td class="br">${eur(x.isplaceno)}</td><td>${Number(x.za_obracun) > 0 ? '<button class="mali" data-a="obracun">Mjesečni obračun</button>' : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="sitno">Još nema odobrenih partnera s kodom.</p>'}
+          <td class="br">${eur(x.obracunato_neisplaceno)}</td><td class="br">${eur(x.isplaceno)}</td><td>${!x.ugovor ? '<span class="sitno">Bez ugovora</span>' : Number(x.za_obracun) > 0 ? '<button class="mali" data-a="obracun">Mjesečni obračun</button>' : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="sitno">Još nema odobrenih partnera s kodom.</p>'}
       <h2>Obračuni i isplate</h2>
       ${isp.length ? `<table><thead><tr><th>Partner</th><th>Razdoblje</th><th class="br">Iznos</th><th>Račun</th><th>Isplaćeno</th><th></th></tr></thead><tbody>
         ${isp.map((i) => `<tr data-isp="${i.id}"><td><b>${esc(i.naziv)}</b> · ${esc(i.kod)}</td><td>${dan(i.obracun_od)} – ${dan(i.obracun_do)}</td><td class="br"><b>${eur(i.iznos_eur)}</b></td>
